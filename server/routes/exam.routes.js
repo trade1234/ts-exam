@@ -17,7 +17,7 @@ router.put("/attempts/:attemptId/answers", protect, authorize("STUDENT"), valida
   body: z.object({
     answers: z.array(z.object({
       questionId: z.string().min(1),
-      selectedAnswer: z.enum(["A", "B", "C", "D", ""]).optional(),
+      selectedAnswer: z.string().optional().default(""),
       markedForReview: z.boolean().optional()
     }))
   })
@@ -25,4 +25,5 @@ router.put("/attempts/:attemptId/answers", protect, authorize("STUDENT"), valida
 router.post("/submit", protect, authorize("STUDENT"), validate(z.object({ body: z.object({ attemptId: z.string().min(1) }) })), submitExam);
 
 export default router;
+
 

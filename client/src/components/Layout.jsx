@@ -163,7 +163,7 @@ export default function Layout({ role }) {
 
   return (
     <div className={darkMode ? "dark" : ""}>
-      <div className="min-h-screen bg-[#e9eef6] p-0 text-slate-950 transition-colors dark:bg-[#101827] dark:text-slate-100 lg:p-8">
+      <div className="min-h-screen bg-[#e9eef6] p-0 text-slate-950 transition-colors dark:bg-[#101827] dark:text-slate-100 lg:p-6 xl:p-8">
         {toast && (
           <div className="fixed right-5 top-5 z-50 max-w-sm rounded-xl border border-emerald-200 bg-white p-4 text-slate-950 shadow-[0_24px_70px_rgba(16,185,129,0.25)] dark:border-emerald-900 dark:bg-[#111a2b] dark:text-slate-100">
             <div className="flex gap-3">
@@ -183,24 +183,25 @@ export default function Layout({ role }) {
             <aside className="hidden border-r border-slate-100 bg-white transition-colors dark:border-slate-800 dark:bg-[#111a2b] xl:flex xl:flex-col">
               <div className="flex h-[92px] items-center gap-4 border-b border-slate-100 px-8 transition-colors dark:border-slate-800">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white p-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-                  <img className="h-full w-full object-contain" src={logoUrl} alt="University logo" />
+                  <img className="h-full w-full object-contain" src={logoUrl} alt="Trade Ethiopia logo" />
                 </div>
                 <div>
                   <p className="text-2xl font-semibold tracking-tight">{role === "ADMIN" ? "Admin" : "Exams"}</p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">University portal</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">Trade Ethiopia SBI</p>
                 </div>
               </div>
 
               <nav className="flex-1 px-0 py-9">
                 <p className="mb-6 px-9 text-sm uppercase text-slate-400 dark:text-slate-500">Menu</p>
-                <div className="space-y-2">
+                <div className="space-y-3 px-6">
                   {links.map(({ to, label, icon: Icon }) => (
-                    <NavLink key={to} end to={to} className={({ isActive }) => `relative flex items-center gap-5 px-9 py-4 text-base font-medium transition ${isActive ? "bg-[#edf6ff] text-[#0f88d2] dark:bg-[#17324d] dark:text-[#7dd3fc]" : "text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/70"}`}>
+                    <NavLink key={to} end to={to} className={({ isActive }) => `group flex min-h-12 items-center gap-4 rounded-xl border px-4 py-3 text-base font-semibold shadow-sm transition ${isActive ? "border-[#1e9bf0] bg-[#edf6ff] text-[#0f88d2] shadow-blue-100 dark:border-[#38bdf8] dark:bg-[#17324d] dark:text-[#7dd3fc] dark:shadow-none" : "border-slate-100 bg-white text-slate-700 hover:border-blue-100 hover:bg-slate-50 dark:border-slate-800 dark:bg-[#111a2b] dark:text-slate-300 dark:hover:bg-slate-800/70"}`}>
                       {({ isActive }) => (
                         <>
-                          {isActive && <span className="absolute left-0 top-0 h-full w-1 rounded-r bg-[#1e9bf0]" />}
-                          <Icon size={20} className={isActive ? "text-[#0f88d2] dark:text-[#7dd3fc]" : "text-slate-400 dark:text-slate-500"} />
-                          {label}
+                          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition ${isActive ? "bg-[#1e9bf0] text-white" : "bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-[#0f88d2] dark:bg-slate-800 dark:text-slate-400"}`}>
+                            <Icon size={19} />
+                          </span>
+                          <span>{label}</span>
                         </>
                       )}
                     </NavLink>
@@ -208,10 +209,10 @@ export default function Layout({ role }) {
                 </div>
 
                 <p className="mb-6 mt-12 px-9 text-sm uppercase text-slate-400 dark:text-slate-500">Groups</p>
-                <div className="space-y-3 px-9">
+                <div className="space-y-3 px-6">
                   {groups.map((group, index) => (
-                    <button key={group.label} className="flex w-full items-center gap-5 rounded-lg px-2 py-2 text-left text-base font-medium text-slate-800 transition hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/70" type="button" onClick={() => navigate(group.to)}>
-                      <span className={`h-5 w-5 rounded-full border-2 ${["border-[#f59e0b]", "border-[#8b5cf6]", "border-[#ec4899]", "border-[#10b981]"][index]}`} />
+                    <button key={group.label} className="flex min-h-11 w-full items-center gap-4 rounded-xl border border-slate-100 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-800 shadow-sm transition hover:border-blue-100 hover:bg-slate-50 dark:border-slate-800 dark:bg-[#111a2b] dark:text-slate-300 dark:hover:bg-slate-800/70" type="button" onClick={() => navigate(group.to)}>
+                      <span className={`h-4 w-4 rounded-full border-2 ${["border-[#f59e0b]", "border-[#8b5cf6]", "border-[#ec4899]", "border-[#10b981]"][index]}`} />
                       {group.label}
                     </button>
                   ))}
@@ -232,13 +233,13 @@ export default function Layout({ role }) {
             </aside>
 
             <main className="min-w-0 bg-[#fafafa] transition-colors dark:bg-[#0f172a]">
-              <header className="sticky top-0 z-20 flex min-h-[92px] items-center justify-between gap-4 border-b border-slate-100 bg-white px-5 transition-colors dark:border-slate-800 dark:bg-[#111a2b] sm:px-6 lg:px-10 xl:px-16">
+              <header className="sticky top-0 z-20 flex min-h-[76px] items-center justify-between gap-3 border-b border-slate-100 bg-white px-4 transition-colors dark:border-slate-800 dark:bg-[#111a2b] sm:min-h-[92px] sm:px-6 lg:px-10 xl:px-16">
                 <div className="flex min-w-0 items-center gap-3 sm:hidden">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-                    <img className="h-full w-full object-contain" src={logoUrl} alt="University logo" />
+                    <img className="h-full w-full object-contain" src={logoUrl} alt="Trade Ethiopia logo" />
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-slate-950 dark:text-slate-100">University Portal</p>
+                    <p className="truncate text-sm font-bold text-slate-950 dark:text-slate-100">Trade Ethiopia SBI</p>
                     <p className="truncate text-xs text-slate-500 dark:text-slate-400">{role === "ADMIN" ? "Admin" : "Exams"}</p>
                   </div>
                 </div>
@@ -246,7 +247,7 @@ export default function Layout({ role }) {
                   <Search size={22} className="text-slate-500 dark:text-slate-400" />
                   <input className="w-full max-w-md bg-transparent text-base outline-none placeholder:text-slate-500 dark:text-slate-100 dark:placeholder:text-slate-500" placeholder="Search..." />
                 </div>
-                <div className="flex items-center gap-4 sm:gap-5">
+                <div className="flex shrink-0 items-center gap-2 sm:gap-5">
                   <button className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-600 transition hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 xl:hidden" type="button" onClick={() => setDarkMode((value) => !value)} aria-label="Toggle dark mode">
                     {darkMode ? <Sun size={19} /> : <Moon size={19} />}
                   </button>
@@ -318,17 +319,20 @@ export default function Layout({ role }) {
                 </div>
               </header>
 
-              <div className="border-b border-slate-100 bg-white px-5 py-3 transition-colors dark:border-slate-800 dark:bg-[#111a2b] xl:hidden">
-                <nav className="flex gap-2 overflow-auto">
-                  {links.map(({ to, label }) => (
-                    <NavLink key={to} end to={to} className="whitespace-nowrap rounded-lg bg-[#edf6ff] px-3 py-2 text-sm font-semibold text-[#0f88d2] dark:bg-[#17324d] dark:text-[#7dd3fc]">{label}</NavLink>
-                  ))}
-                </nav>
-              </div>
-
-              <section className="px-5 py-8 sm:px-6 lg:px-10 xl:px-16 lg:py-16">
+              <section className="px-4 pb-24 pt-6 sm:px-6 lg:px-10 xl:px-16 lg:py-12 xl:py-16">
                 <Outlet />
               </section>
+
+              <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-2 py-2 shadow-[0_-12px_30px_rgba(15,23,42,0.14)] backdrop-blur dark:border-slate-800 dark:bg-[#111a2b]/95 xl:hidden">
+                <div className="mx-auto grid max-w-2xl gap-1" style={{ gridTemplateColumns: `repeat(${links.length}, minmax(0, 1fr))` }}>
+                  {links.map(({ to, label, icon: Icon }) => (
+                    <NavLink key={to} end to={to} className={({ isActive }) => `flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[11px] font-bold transition ${isActive ? "bg-[#0f88d2] text-white dark:bg-[#1e9bf0]" : "text-slate-500 hover:bg-blue-50 hover:text-[#0f88d2] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-[#7dd3fc]"}` }>
+                      <Icon size={19} />
+                      <span className="max-w-full truncate">{label}</span>
+                    </NavLink>
+                  ))}
+                </div>
+              </nav>
             </main>
           </div>
         </div>
@@ -336,6 +340,10 @@ export default function Layout({ role }) {
     </div>
   );
 }
+
+
+
+
 
 
 

@@ -1,12 +1,45 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Clock3, PauseCircle, PlayCircle, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, CalendarClock, Clock3, PauseCircle, Pencil, PlayCircle, Plus, Trash2 } from "lucide-react";
 import DataTable from "../components/DataTable.jsx";
 import Modal from "../components/Modal.jsx";
 import { api } from "../services/api.js";
 
 const blankExam = { courseId: "", title: "", description: "", durationMinutes: 30, extraTimeMinutes: 0, totalMarks: 10, passPercentage: 50, startDate: "", endDate: "" };
-const blankQuestion = { examId: "", questionText: "", optionA: "", optionB: "", optionC: "", optionD: "", correctAnswer: "A", marks: 1 };
+const blankQuestion = { examId: "", questionType: "MULTIPLE_CHOICE", questionText: "", optionA: "", optionB: "", optionC: "", optionD: "", correctAnswer: "A", marks: 1 };
 const blankExtraTime = { examId: "", minutes: 5 };
+const blankQuestionBatch = { examId: "", questionType: "MULTIPLE_CHOICE", count: 1, marks: 1 };
+
+function toLocalDateTimeInput(date) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function defaultExamForm() {
+  const startDate = new Date(Date.now() + 5 * 60000);
+  const endDate = new Date(startDate.getTime() + 30 * 60000);
+  return { ...blankExam, startDate: toLocalDateTimeInput(startDate), endDate: toLocalDateTimeInput(endDate) };
+}
+
+function apiErrorMessage(error) {
+  return error?.response?.data?.message || "Request failed. Please check the form and try again.";
+}
+
+function questionTypeLabel(questionType) {
+  if (questionType === "TRUE_FALSE") return "True / false";
+  if (questionType === "SHORT_ANSWER") return "Short answer";
+  return "Multiple choice";
+}
+
+function answerKeyForType(questionType) {
+  if (questionType === "TRUE_FALSE") return "TRUE";
+  if (questionType === "MULTIPLE_CHOICE") return "A";
+  return "";
+}
+
+function toQuestionPayload(form) {
+  if (form.questionType === "MULTIPLE_CHOICE") return form;
+  return { ...form, optionA: "", optionB: "", optionC: "", optionD: "" };
+}
 
 function examStatus(exam, now = Date.now()) {
   const start = new Date(exam.startDate).getTime();
@@ -32,7 +65,11 @@ function countdownState(exam, now) {
   const current = now.getTime();
 
   if (exam.isPaused) {
-    return { label: "Paused", remaining: Math.max(Math.floor((end - current) / 1000), 0), mode: "paused", progress: 0 };
+    const pausedAt = exam.pausedAt ? new Date(exam.pausedAt).getTime() : current;
+    const frozenRemaining = Math.max(Math.floor((end - pausedAt) / 1000), 0);
+    const total = Math.max(end - start, 1);
+    const elapsed = Math.min(Math.max(pausedAt - start, 0), total);
+    return { label: "Paused", remaining: frozenRemaining, mode: "paused", progress: Math.round((elapsed / total) * 100) };
   }
 
   if (current < start) {
@@ -67,6 +104,26 @@ function ClockSegment({ label, value, active }) {
     </div>
   );
 }
+function ActionIconButton({ label, icon: Icon, onClick, tone = "slate" }) {
+  const tones = {
+    slate: "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-[#17223a] dark:text-slate-200 dark:hover:bg-slate-800",
+    blue: "border-blue-100 bg-blue-50 text-blue-700 hover:border-blue-200 hover:bg-blue-100 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-200 dark:hover:bg-sky-900/40",
+    amber: "border-amber-100 bg-amber-50 text-amber-700 hover:border-amber-200 hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200 dark:hover:bg-amber-900/40",
+    red: "border-red-100 bg-red-50 text-red-600 hover:border-red-200 hover:bg-red-100 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200 dark:hover:bg-red-900/40"
+  };
+
+  return (
+    <button
+      className={`inline-flex h-9 w-9 items-center justify-center rounded-full border transition ${tones[tone]}`}
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+    >
+      <Icon size={16} />
+    </button>
+  );
+}
 
 function toExamPayload(exam, overrides = {}) {
   return {
@@ -86,20 +143,31 @@ function toExamPayload(exam, overrides = {}) {
 export default function ExamManagement() {
   const [courses, setCourses] = useState([]);
   const [exams, setExams] = useState([]);
+  const [questions, setQuestions] = useState([]);
   const [examForm, setExamForm] = useState(blankExam);
+  const [editingExamId, setEditingExamId] = useState("");
   const [questionForm, setQuestionForm] = useState(blankQuestion);
   const [extraTimeForm, setExtraTimeForm] = useState(blankExtraTime);
+  const [questionBatch, setQuestionBatch] = useState(blankQuestionBatch);
+  const [pendingQuestions, setPendingQuestions] = useState([]);
+  const [questionStep, setQuestionStep] = useState(1);
+  const [questionMessage, setQuestionMessage] = useState("");
+  const [formError, setFormError] = useState("");
   const [modal, setModal] = useState(null);
   const [savingId, setSavingId] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [questionDeleteTarget, setQuestionDeleteTarget] = useState(null);
+  const [selectedQuestionExamId, setSelectedQuestionExamId] = useState("");
   const [selectedStartExamId, setSelectedStartExamId] = useState("");
   const [now, setNow] = useState(new Date());
 
   function load() {
-    Promise.all([api.get("/courses"), api.get("/exams")]).then(([c, e]) => {
+    Promise.all([api.get("/courses"), api.get("/exams"), api.get("/questions")]).then(([c, e, q]) => {
       setCourses(c.data);
       setExams(e.data);
+      setQuestions(q.data);
       setSelectedStartExamId((current) => current || e.data[0]?._id || "");
+      setSelectedQuestionExamId((current) => current || e.data[0]?._id || "");
       setExtraTimeForm((current) => ({ ...current, examId: current.examId || e.data[0]?._id || "" }));
     });
   }
@@ -113,17 +181,150 @@ export default function ExamManagement() {
 
   async function saveExam(e) {
     e.preventDefault();
-    await api.post("/exams", examForm);
-    setModal(null);
-    setExamForm(blankExam);
-    load();
+    setFormError("");
+    const action = e.nativeEvent.submitter?.value || "save";
+    try {
+      if (editingExamId) {
+        await api.put(`/exams/${editingExamId}`, examForm);
+        setEditingExamId("");
+        setExamForm(blankExam);
+        setModal(null);
+        load();
+        return;
+      }
+
+      const { data: createdExam } = await api.post("/exams", examForm);
+      setExamForm(blankExam);
+      if (action === "addQuestions") {
+        setPendingQuestions([]);
+        setQuestionStep(1);
+        setQuestionMessage("Exam saved. Choose the first question type and number of questions.");
+        setQuestionBatch({ ...blankQuestionBatch, examId: createdExam._id });
+        setSelectedQuestionExamId(createdExam._id);
+        setModal("questionSetup");
+      } else {
+        setModal(null);
+      }
+      load();
+    } catch (error) {
+      setFormError(apiErrorMessage(error));
+    }
+  }
+
+  function openCreateExam() {
+    setFormError("");
+    setEditingExamId("");
+    setExamForm(defaultExamForm());
+    setModal("exam");
+  }
+
+  function openEditSchedule(exam) {
+    setFormError("");
+    setEditingExamId(exam._id);
+    setExamForm({
+      ...toExamPayload(exam),
+      startDate: toLocalDateTimeInput(new Date(exam.startDate)),
+      endDate: toLocalDateTimeInput(new Date(exam.endDate))
+    });
+    setModal("exam");
   }
 
   async function saveQuestion(e) {
     e.preventDefault();
-    await api.post("/questions", questionForm);
-    setModal(null);
+    setFormError("");
+    if (!questionForm._id) return;
+
+    try {
+      const currentExamId = questionForm.examId;
+      await api.put(`/questions/${questionForm._id}`, toQuestionPayload(questionForm));
+      setSelectedQuestionExamId(currentExamId);
+      setModal(null);
+      setQuestionForm(blankQuestion);
+      load();
+    } catch (error) {
+      setFormError(apiErrorMessage(error));
+    }
+  }
+
+  function openAddQuestion() {
+    const examId = selectedQuestionExamId || exams[0]?._id || "";
+    setFormError("");
+    setQuestionMessage("");
+    setPendingQuestions([]);
+    setQuestionStep(1);
+    setQuestionBatch({ ...blankQuestionBatch, examId });
+    setModal("questionSetup");
+  }
+
+  function startQuestionBatch(e) {
+    e.preventDefault();
+    setFormError("");
+    const questionType = questionBatch.questionType;
+    setQuestionStep(1);
+    setQuestionForm({
+      ...blankQuestion,
+      examId: questionBatch.examId,
+      questionType,
+      marks: questionBatch.marks,
+      correctAnswer: answerKeyForType(questionType)
+    });
+    setModal("questionBatch");
+  }
+
+  function saveDraftQuestion(e) {
+    e.preventDefault();
+    setFormError("");
+    const payload = toQuestionPayload(questionForm);
+    const nextPending = [...pendingQuestions, payload];
+    const batchCount = Number(questionBatch.count) || 1;
+    setPendingQuestions(nextPending);
+
+    if (questionStep < batchCount) {
+      setQuestionStep((current) => current + 1);
+      setQuestionForm({
+        ...blankQuestion,
+        examId: questionBatch.examId,
+        questionType: questionBatch.questionType,
+        marks: questionBatch.marks,
+        correctAnswer: answerKeyForType(questionBatch.questionType)
+      });
+      return;
+    }
+
+    setQuestionMessage(`${nextPending.length} draft question${nextPending.length === 1 ? "" : "s"} ready. Choose another type to continue or submit all.`);
     setQuestionForm(blankQuestion);
+    setModal("questionSetup");
+  }
+
+  async function submitPendingQuestions() {
+    if (!pendingQuestions.length) return;
+    setFormError("");
+    setSavingId("questions");
+    try {
+      await api.post("/questions/bulk", { questions: pendingQuestions });
+      setSelectedQuestionExamId(questionBatch.examId);
+      setPendingQuestions([]);
+      setQuestionMessage("");
+      setModal(null);
+      load();
+    } catch (error) {
+      setFormError(apiErrorMessage(error));
+    } finally {
+      setSavingId("");
+    }
+  }
+
+  function openEditQuestion(question) {
+    setFormError("");
+    setQuestionMessage("");
+    setQuestionForm({
+      ...blankQuestion,
+      ...question,
+      examId: question.examId?._id || question.examId,
+      questionType: question.questionType || "MULTIPLE_CHOICE",
+      correctAnswer: question.correctAnswer || answerKeyForType(question.questionType || "MULTIPLE_CHOICE")
+    });
+    setModal("question");
   }
 
   async function addExtraTime(e) {
@@ -200,6 +401,23 @@ export default function ExamManagement() {
     }
   }
 
+  async function removeQuestion() {
+    if (!questionDeleteTarget) return;
+    setSavingId(questionDeleteTarget._id);
+    try {
+      await api.delete(`/questions/${questionDeleteTarget._id}`);
+      setQuestionDeleteTarget(null);
+      load();
+    } finally {
+      setSavingId("");
+    }
+  }
+
+  function manageExamQuestions(exam) {
+    setSelectedQuestionExamId(exam._id);
+    document.getElementById("exam-questions")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex flex-col justify-between gap-3 sm:flex-row">
@@ -209,8 +427,8 @@ export default function ExamManagement() {
         </div>
         <div className="flex gap-2">
           <button className="btn-secondary" onClick={() => setModal("extraTime")}><Clock3 size={16} /> Extra Time</button>
-          <button className="btn-secondary" onClick={() => setModal("question")}><Plus size={16} /> Add Question</button>
-          <button className="btn-primary" onClick={() => setModal("exam")}><Plus size={16} /> Create Exam</button>
+          <button className="btn-secondary" onClick={openAddQuestion}><Plus size={16} /> Add Question</button>
+          <button className="btn-primary" onClick={openCreateExam}><Plus size={16} /> Create Exam</button>
         </div>
       </div>
 
@@ -273,11 +491,34 @@ export default function ExamManagement() {
         { key: "startDate", label: "Starts", render: (row) => formatDateTime(row.startDate) },
         { key: "endDate", label: "Ends", render: (row) => formatDateTime(row.endDate) },
         { key: "actions", label: "Actions", render: (row) => (
-          <div className="flex flex-wrap gap-2">
-            <button className="btn-secondary px-2" onClick={() => setDeleteTarget(row)} title="Delete exam"><Trash2 size={16} /></button>
-          </div>
+          <div className="flex items-center gap-2"><ActionIconButton label="Edit schedule" icon={CalendarClock} onClick={() => openEditSchedule(row)} tone="amber" /><ActionIconButton label="Edit questions" icon={Pencil} onClick={() => manageExamQuestions(row)} tone="blue" /><ActionIconButton label="Delete exam" icon={Trash2} onClick={() => setDeleteTarget(row)} tone="red" /></div>
         ) }
       ]} rows={exams} />
+      <section id="exam-questions" className="space-y-4 rounded-xl border border-blue-100 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-[#111a2b]">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+          <div>
+            <h3 className="text-xl font-bold">Exam Questions</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Select an exam, then edit question text, options, answer key, type, or marks.</p>
+          </div>
+          <div className="flex flex-col gap-2 sm:min-w-80 sm:flex-row">
+            <select className="input" value={selectedQuestionExamId} onChange={(event) => setSelectedQuestionExamId(event.target.value)} disabled={!exams.length}>
+              {!exams.length && <option value="">No exams created</option>}
+              {exams.map((exam) => <option key={exam._id} value={exam._id}>{exam.title}</option>)}
+            </select>
+            <button className="btn-primary whitespace-nowrap" type="button" onClick={openAddQuestion}><Plus size={16} /> Add Question</button>
+          </div>
+        </div>
+
+        <DataTable columns={[
+          { key: "questionText", label: "Question", render: (row) => <span className="line-clamp-2 font-semibold">{row.questionText}</span> },
+          { key: "questionType", label: "Type", render: (row) => row.questionType === "TRUE_FALSE" ? "True / false" : row.questionType === "SHORT_ANSWER" ? "Short answer" : "Multiple choice" },
+          { key: "correctAnswer", label: "Answer", render: (row) => <span className="font-mono text-xs font-bold">{row.correctAnswer}</span> },
+          { key: "marks", label: "Marks" },
+          { key: "actions", label: "Actions", render: (row) => (
+            <div className="flex items-center gap-2"><ActionIconButton label="Edit question" icon={Pencil} onClick={() => openEditQuestion(row)} tone="blue" /><ActionIconButton label="Delete question" icon={Trash2} onClick={() => setQuestionDeleteTarget(row)} tone="red" /></div>
+          ) }
+        ]} rows={questions.filter((question) => String(question.examId?._id || question.examId) === selectedQuestionExamId)} />
+      </section>
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_30px_90px_rgba(15,23,42,0.28)] dark:border-slate-800 dark:bg-[#111a2b]">
@@ -301,9 +542,32 @@ export default function ExamManagement() {
           </div>
         </div>
       )}
-      {modal === "exam" && (
-        <Modal title="Create Exam" onClose={() => setModal(null)}>
+      {questionDeleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_30px_90px_rgba(15,23,42,0.28)] dark:border-slate-800 dark:bg-[#111a2b]">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-300">
+                <AlertTriangle size={26} />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-950 dark:text-slate-100">Delete question?</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  This will permanently delete this question from the exam.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <button className="btn-secondary" type="button" onClick={() => setQuestionDeleteTarget(null)} disabled={savingId === questionDeleteTarget._id}>Cancel</button>
+              <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300" type="button" onClick={removeQuestion} disabled={savingId === questionDeleteTarget._id}>
+                <Trash2 size={16} /> {savingId === questionDeleteTarget._id ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}      {modal === "exam" && (
+        <Modal title={editingExamId ? "Edit Schedule" : "Create Exam"} onClose={() => { setModal(null); setEditingExamId(""); }}>
           <form className="grid gap-3 sm:grid-cols-2" onSubmit={saveExam}>
+            {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 dark:bg-red-950/30 dark:text-red-200 sm:col-span-2">{formError}</p>}
             <select className="input sm:col-span-2" value={examForm.courseId} onChange={(e) => setExamForm({ ...examForm, courseId: e.target.value })} required>
               <option value="">Select course</option>
               {courses.map((course) => <option key={course._id} value={course._id}>{course.courseCode} - {course.courseName}</option>)}
@@ -322,7 +586,10 @@ export default function ExamManagement() {
               <input className="input" type="datetime-local" value={examForm.endDate} onChange={(e) => setExamForm({ ...examForm, endDate: e.target.value })} required />
             </label>
             <textarea className="input sm:col-span-2" placeholder="Description" value={examForm.description} onChange={(e) => setExamForm({ ...examForm, description: e.target.value })} />
-            <button className="btn-primary sm:col-span-2">Save Exam</button>
+            <div className="grid gap-3 sm:col-span-2 sm:grid-cols-2">
+              <button className="btn-secondary" type="submit" value="save">{editingExamId ? "Save Schedule" : "Save Exam"}</button>
+              {!editingExamId && <button className="btn-primary" type="submit" value="addQuestions"><Plus size={16} /> Save Exam and Add Questions</button>}
+            </div>
           </form>
         </Modal>
       )}
@@ -345,23 +612,174 @@ export default function ExamManagement() {
           </form>
         </Modal>
       )}
-      {modal === "question" && (
-        <Modal title="Add Question" onClose={() => setModal(null)}>
+      {modal === "questionSetup" && (
+        <Modal title="Add Questions" onClose={() => setModal(null)}>
+          <form className="grid gap-4" onSubmit={startQuestionBatch}>
+            {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 dark:bg-red-950/30 dark:text-red-200">{formError}</p>}
+            {questionMessage && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-200">{questionMessage}</p>}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="space-y-1 text-sm font-semibold text-slate-600 dark:text-slate-300 sm:col-span-2">
+                <span>Exam</span>
+                <select className="input" value={questionBatch.examId} onChange={(event) => setQuestionBatch({ ...questionBatch, examId: event.target.value })} disabled={pendingQuestions.length > 0} required>
+                  <option value="">Select exam</option>
+                  {exams.map((exam) => <option key={exam._id} value={exam._id}>{exam.title}</option>)}
+                </select>
+              </label>
+              <label className="space-y-1 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                <span>Question type</span>
+                <select className="input" value={questionBatch.questionType} onChange={(event) => setQuestionBatch({ ...questionBatch, questionType: event.target.value })} required>
+                  <option value="MULTIPLE_CHOICE">Multiple choice</option>
+                  <option value="TRUE_FALSE">True / false</option>
+                  <option value="SHORT_ANSWER">Short answer</option>
+                </select>
+              </label>
+              <label className="space-y-1 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                <span>Number of questions</span>
+                <input className="input" type="number" min="1" value={questionBatch.count} onChange={(event) => setQuestionBatch({ ...questionBatch, count: event.target.value })} required />
+              </label>
+              <label className="space-y-1 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                <span>Marks per question</span>
+                <input className="input" type="number" min="0.1" step="0.1" value={questionBatch.marks} onChange={(event) => setQuestionBatch({ ...questionBatch, marks: event.target.value })} required />
+              </label>
+              <div className="rounded-xl bg-blue-50 p-3 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <p className="font-bold text-slate-900 dark:text-slate-100">Draft questions: {pendingQuestions.length}</p>
+                <p className="mt-1">Current batch: {questionTypeLabel(questionBatch.questionType)}</p>
+              </div>
+            </div>
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+              <button className="btn-secondary" type="button" onClick={() => setModal(null)}>Cancel</button>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button className="btn-secondary" type="button" onClick={submitPendingQuestions} disabled={!pendingQuestions.length || savingId === "questions"}>{savingId === "questions" ? "Submitting..." : "Submit All Questions"}</button>
+                <button className="btn-primary" type="submit"><Plus size={16} /> Start Adding</button>
+              </div>
+            </div>
+          </form>
+        </Modal>
+      )}
+      {modal === "questionBatch" && (
+        <Modal title={`Add ${questionTypeLabel(questionBatch.questionType)} Question ${questionStep} of ${questionBatch.count}`} onClose={() => setModal("questionSetup")}>
+          <form className="grid gap-3 sm:grid-cols-2" onSubmit={saveDraftQuestion}>
+            {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 dark:bg-red-950/30 dark:text-red-200 sm:col-span-2">{formError}</p>}
+            <div className="rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 dark:bg-slate-800 dark:text-sky-200 sm:col-span-2">
+              Draft questions ready: {pendingQuestions.length}
+            </div>
+            <textarea className="input sm:col-span-2" placeholder="Question text" value={questionForm.questionText} onChange={(event) => setQuestionForm({ ...questionForm, questionText: event.target.value })} required />
+
+            {questionForm.questionType === "MULTIPLE_CHOICE" ? (
+              <>
+                {["A", "B", "C", "D"].map((letter) => <input key={letter} className="input" placeholder={`Option ${letter}`} value={questionForm[`option${letter}`]} onChange={(event) => setQuestionForm({ ...questionForm, [`option${letter}`]: event.target.value })} required />)}
+                <label className="space-y-1 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                  <span>Correct answer</span>
+                  <select className="input" value={questionForm.correctAnswer} onChange={(event) => setQuestionForm({ ...questionForm, correctAnswer: event.target.value })}>
+                    {["A", "B", "C", "D"].map((letter) => <option key={letter}>{letter}</option>)}
+                  </select>
+                </label>
+              </>
+            ) : questionForm.questionType === "TRUE_FALSE" ? (
+              <label className="space-y-1 text-sm font-semibold text-slate-600 dark:text-slate-300 sm:col-span-2">
+                <span>Correct answer</span>
+                <select className="input" value={questionForm.correctAnswer} onChange={(event) => setQuestionForm({ ...questionForm, correctAnswer: event.target.value })}>
+                  <option value="TRUE">True</option>
+                  <option value="FALSE">False</option>
+                </select>
+              </label>
+            ) : (
+              <label className="space-y-1 text-sm font-semibold text-slate-600 dark:text-slate-300 sm:col-span-2">
+                <span>Answer key</span>
+                <input className="input" placeholder="Type the expected short answer" value={questionForm.correctAnswer} onChange={(event) => setQuestionForm({ ...questionForm, correctAnswer: event.target.value })} required />
+              </label>
+            )}
+
+            <label className="space-y-1 text-sm font-semibold text-slate-600 dark:text-slate-300">
+              <span>Marks</span>
+              <input className="input" type="number" min="0.1" step="0.1" value={questionForm.marks} onChange={(event) => setQuestionForm({ ...questionForm, marks: event.target.value })} required />
+            </label>
+            <div className="flex flex-col-reverse gap-3 sm:col-span-2 sm:flex-row sm:justify-between">
+              <button className="btn-secondary" type="button" onClick={() => setModal("questionSetup")}>Back</button>
+              <button className="btn-primary" type="submit">{questionStep < Number(questionBatch.count) ? "Save and Next" : "Save Batch"}</button>
+            </div>
+          </form>
+        </Modal>
+      )}      {modal === "question" && (
+        <Modal title={questionForm._id ? "Edit Question" : "Add Question"} onClose={() => setModal(null)}>
           <form className="grid gap-3 sm:grid-cols-2" onSubmit={saveQuestion}>
+            {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 dark:bg-red-950/30 dark:text-red-200 sm:col-span-2">{formError}</p>}
             <select className="input sm:col-span-2" value={questionForm.examId} onChange={(e) => setQuestionForm({ ...questionForm, examId: e.target.value })} required>
               <option value="">Select exam</option>
               {exams.map((exam) => <option key={exam._id} value={exam._id}>{exam.title}</option>)}
             </select>
-            <textarea className="input sm:col-span-2" placeholder="Question text" value={questionForm.questionText} onChange={(e) => setQuestionForm({ ...questionForm, questionText: e.target.value })} required />
-            {["A", "B", "C", "D"].map((letter) => <input key={letter} className="input" placeholder={`Option ${letter}`} value={questionForm[`option${letter}`]} onChange={(e) => setQuestionForm({ ...questionForm, [`option${letter}`]: e.target.value })} required />)}
-            <select className="input" value={questionForm.correctAnswer} onChange={(e) => setQuestionForm({ ...questionForm, correctAnswer: e.target.value })}>
-              {["A", "B", "C", "D"].map((letter) => <option key={letter}>{letter}</option>)}
+            <select
+              className="input sm:col-span-2"
+              value={questionForm.questionType}
+              onChange={(e) => setQuestionForm({
+                ...questionForm,
+                questionType: e.target.value,
+                correctAnswer: answerKeyForType(e.target.value),
+                optionA: e.target.value === "MULTIPLE_CHOICE" ? questionForm.optionA : "",
+                optionB: e.target.value === "MULTIPLE_CHOICE" ? questionForm.optionB : "",
+                optionC: e.target.value === "MULTIPLE_CHOICE" ? questionForm.optionC : "",
+                optionD: e.target.value === "MULTIPLE_CHOICE" ? questionForm.optionD : ""
+              })}
+            >
+              <option value="MULTIPLE_CHOICE">Multiple choice</option>
+              <option value="TRUE_FALSE">True / false</option>
+              <option value="SHORT_ANSWER">Short answer</option>
             </select>
-            <input className="input" type="number" value={questionForm.marks} onChange={(e) => setQuestionForm({ ...questionForm, marks: e.target.value })} />
-            <button className="btn-primary sm:col-span-2">Save Question</button>
+            <textarea className="input sm:col-span-2" placeholder="Question text" value={questionForm.questionText} onChange={(e) => setQuestionForm({ ...questionForm, questionText: e.target.value })} required />
+
+            {questionForm.questionType === "MULTIPLE_CHOICE" ? (
+              <>
+                {["A", "B", "C", "D"].map((letter) => <input key={letter} className="input" placeholder={`Option ${letter}`} value={questionForm[`option${letter}`]} onChange={(e) => setQuestionForm({ ...questionForm, [`option${letter}`]: e.target.value })} required />)}
+                <label className="space-y-1 text-sm font-semibold text-slate-600 dark:text-slate-300">
+                  <span>Correct answer</span>
+                  <select className="input" value={questionForm.correctAnswer} onChange={(e) => setQuestionForm({ ...questionForm, correctAnswer: e.target.value })}>
+                    {["A", "B", "C", "D"].map((letter) => <option key={letter}>{letter}</option>)}
+                  </select>
+                </label>
+              </>
+            ) : questionForm.questionType === "TRUE_FALSE" ? (
+              <label className="space-y-1 text-sm font-semibold text-slate-600 dark:text-slate-300 sm:col-span-2">
+                <span>Correct answer</span>
+                <select className="input" value={questionForm.correctAnswer} onChange={(e) => setQuestionForm({ ...questionForm, correctAnswer: e.target.value })}>
+                  <option value="TRUE">True</option>
+                  <option value="FALSE">False</option>
+                </select>
+              </label>
+            ) : (
+              <label className="space-y-1 text-sm font-semibold text-slate-600 dark:text-slate-300 sm:col-span-2">
+                <span>Answer key</span>
+                <input className="input" placeholder="Type the expected short answer" value={questionForm.correctAnswer} onChange={(e) => setQuestionForm({ ...questionForm, correctAnswer: e.target.value })} required />
+              </label>
+            )}
+
+            <label className="space-y-1 text-sm font-semibold text-slate-600 dark:text-slate-300">
+              <span>Marks</span>
+              <input className="input" type="number" min="0.1" step="0.1" value={questionForm.marks} onChange={(e) => setQuestionForm({ ...questionForm, marks: e.target.value })} />
+            </label>
+            {questionMessage && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-200 sm:col-span-2">{questionMessage}</p>}
+            <button className="btn-primary sm:col-span-2">{questionForm._id ? "Save Question Changes" : "Save Question and Add Next"}</button>
           </form>
         </Modal>
       )}
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

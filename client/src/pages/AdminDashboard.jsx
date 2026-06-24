@@ -13,11 +13,11 @@ const covers = [
 
 function SummaryCard({ label, value, icon: Icon, color, to }) {
   return (
-    <Link to={to} className="block rounded-xl bg-white p-6 text-slate-950 shadow-[0_18px_45px_rgba(30,41,59,0.07)] transition hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(30,41,59,0.12)] focus:outline-none focus:ring-2 focus:ring-[#1e9bf0] dark:bg-[#111a2b] dark:text-slate-100 dark:shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
+    <Link to={to} className="block rounded-xl bg-white p-5 sm:p-6 text-slate-950 shadow-[0_18px_45px_rgba(30,41,59,0.07)] transition hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(30,41,59,0.12)] focus:outline-none focus:ring-2 focus:ring-[#1e9bf0] dark:bg-[#111a2b] dark:text-slate-100 dark:shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</p>
-          <p className="mt-3 text-4xl font-semibold tracking-tight">{value ?? 0}</p>
+          <p className="mt-3 text-3xl font-semibold sm:text-4xl tracking-tight">{value ?? 0}</p>
           <p className="mt-3 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide text-[#0f88d2]">Open <ArrowRight size={13} /></p>
         </div>
         <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${color}`}>
@@ -33,7 +33,7 @@ function CoursePanel({ title, description, index, progress, to }) {
     <Link to={to} className="block rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1e9bf0]">
       <div className="overflow-hidden rounded-xl bg-white shadow-[0_18px_45px_rgba(30,41,59,0.08)] transition hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(30,41,59,0.12)] dark:bg-[#111a2b] dark:shadow-[0_18px_45px_rgba(0,0,0,0.24)]">
         <div className={`h-36 ${covers[index % covers.length]}`} />
-        <div className="p-7">
+        <div className="p-5 sm:p-7">
           <h3 className="text-xl font-semibold text-slate-950 dark:text-slate-100">{title}</h3>
           <p className="mt-5 min-h-16 text-sm leading-7 text-slate-500 dark:text-slate-400">{description}</p>
           <div className="mt-6 flex items-center justify-between gap-4">
@@ -46,8 +46,8 @@ function CoursePanel({ title, description, index, progress, to }) {
           </div>
         </div>
       </div>
-      <div className="mt-5 rounded-xl bg-white p-7 shadow-[0_18px_45px_rgba(30,41,59,0.07)] dark:bg-[#111a2b] dark:shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
-        <div className="flex items-center gap-7">
+      <div className="mt-5 rounded-xl bg-white p-5 sm:p-7 shadow-[0_18px_45px_rgba(30,41,59,0.07)] dark:bg-[#111a2b] dark:shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
+        <div className="flex items-center gap-5">
           <div className="h-1.5 flex-1 rounded-full bg-slate-100 dark:bg-slate-800">
             <div className="h-1.5 rounded-full bg-[#1e9bf0]" style={{ width: `${progress}%` }} />
           </div>
@@ -90,10 +90,10 @@ export default function AdminDashboard() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-950 dark:text-slate-100">Admin Dashboard</h1>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl text-slate-950 dark:text-slate-100">Admin Dashboard</h1>
           <p className="mt-2 text-slate-500 dark:text-slate-400">Loading dashboard data...</p>
         </div>
-        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {[1, 2, 3, 4].map((item) => <div key={item} className="h-32 animate-pulse rounded-xl bg-white shadow-[0_18px_45px_rgba(30,41,59,0.07)] dark:bg-[#111a2b]" />)}
         </div>
         <div className="h-80 animate-pulse rounded-xl bg-white shadow-[0_18px_45px_rgba(30,41,59,0.07)] dark:bg-[#111a2b]" />
@@ -112,14 +112,14 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-10 rounded-2xl bg-[#f8fbff] p-4 text-slate-950 dark:bg-[#0f172a] dark:text-slate-100 sm:p-6">
+    <div className="space-y-7 sm:space-y-10 rounded-2xl bg-[#f8fbff] p-4 text-slate-950 dark:bg-[#0f172a] dark:text-slate-100 sm:p-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white p-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-            <img className="h-full w-full object-contain" src={logoUrl} alt="University logo" />
+            <img className="h-full w-full object-contain" src={logoUrl} alt="Trade Ethiopia logo" />
           </div>
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-slate-950 dark:text-slate-100">Admin Dashboard</h1>
+            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl text-slate-950 dark:text-slate-100">Admin Dashboard</h1>
             <p className="mt-2 text-slate-500 dark:text-slate-400">Overview of students, courses, exams, and performance.</p>
           </div>
         </div>
@@ -128,19 +128,19 @@ export default function AdminDashboard() {
         </Link>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard label="Students" value={totals.students} icon={Users} color="bg-[#edf6ff] text-[#0f88d2]" to="/admin/students" />
         <SummaryCard label="Courses" value={totals.courses} icon={BookOpen} color="bg-[#fff7ed] text-[#f97316]" to="/admin/courses" />
         <SummaryCard label="Exams" value={totals.exams} icon={ClipboardList} color="bg-[#f5f3ff] text-[#8b5cf6]" to="/admin/exams" />
         <SummaryCard label="Attempts" value={totals.attempts} icon={GraduationCap} color="bg-[#fdf2f8] text-[#ec4899]" to="/admin/results" />
       </div>
 
-      <div className="grid gap-9 xl:grid-cols-3">
+      <div className="grid gap-6 xl:gap-9 xl:grid-cols-3">
         {panels.map((panel, index) => <CoursePanel key={panel.title} index={index} {...panel} />)}
       </div>
 
       <div className="grid gap-8 xl:grid-cols-[1.35fr_0.75fr]">
-        <Link to="/admin/results" className="block rounded-xl bg-white p-7 shadow-[0_18px_45px_rgba(30,41,59,0.07)] transition hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(30,41,59,0.12)] focus:outline-none focus:ring-2 focus:ring-[#1e9bf0] dark:bg-[#111a2b] dark:shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
+        <Link to="/admin/results" className="block rounded-xl bg-white p-5 sm:p-7 shadow-[0_18px_45px_rgba(30,41,59,0.07)] transition hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(30,41,59,0.12)] focus:outline-none focus:ring-2 focus:ring-[#1e9bf0] dark:bg-[#111a2b] dark:shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
           <h2 className="flex items-center justify-between gap-3 text-xl font-semibold text-slate-950 dark:text-slate-100">Monthly Exams <FileBarChart size={20} className="text-[#0f88d2]" /></h2>
           <div className="mt-6 h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -153,7 +153,7 @@ export default function AdminDashboard() {
             </ResponsiveContainer>
           </div>
         </Link>
-        <Link to="/admin/results" className="block rounded-xl bg-white p-7 shadow-[0_18px_45px_rgba(30,41,59,0.07)] transition hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(30,41,59,0.12)] focus:outline-none focus:ring-2 focus:ring-[#1e9bf0] dark:bg-[#111a2b] dark:shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
+        <Link to="/admin/results" className="block rounded-xl bg-white p-5 sm:p-7 shadow-[0_18px_45px_rgba(30,41,59,0.07)] transition hover:-translate-y-1 hover:shadow-[0_24px_60px_rgba(30,41,59,0.12)] focus:outline-none focus:ring-2 focus:ring-[#1e9bf0] dark:bg-[#111a2b] dark:shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
           <h2 className="flex items-center justify-between gap-3 text-xl font-semibold text-slate-950 dark:text-slate-100">Pass Rate <FileBarChart size={20} className="text-[#0f88d2]" /></h2>
           <p className="mt-3 text-5xl font-semibold text-[#1e9bf0]">{data?.passRate || 0}%</p>
           <div className="mt-5 h-56">
@@ -172,6 +172,9 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
+
+
 
 
 

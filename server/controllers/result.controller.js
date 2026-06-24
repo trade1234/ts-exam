@@ -7,9 +7,19 @@ import { Question } from "../models/Question.js";
 import { User } from "../models/User.js";
 import { Course } from "../models/Course.js";
 
+function normalizeAnswer(value = "") {
+  return String(value).trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function isCorrectAnswer(question, selectedAnswer) {
+  if (question.questionType === "SHORT_ANSWER") {
+    return normalizeAnswer(selectedAnswer) === normalizeAnswer(question.correctAnswer);
+  }
+  return selectedAnswer === question.correctAnswer;
+}
 function attemptEndsAt(attempt) {
   const exam = attempt.examId;
-  if (!exam) return null;
+  if (!exam || exam.isPaused) return null;
   const durationMinutes = (Number(exam.durationMinutes) || 0) + (Number(exam.extraTimeMinutes) || 0);
   const durationEnd = new Date(new Date(attempt.startedAt).getTime() + durationMinutes * 60000);
   const examEnd = new Date(exam.endDate);
@@ -24,7 +34,7 @@ async function scoreAttempt(attempt, submittedAt = new Date()) {
   const answers = await Answer.find({ attemptId: attempt._id });
   const answerMap = new Map(answers.map((answer) => [String(answer.questionId), answer.selectedAnswer]));
   const score = questions.reduce((total, question) => {
-    return total + (answerMap.get(String(question._id)) === question.correctAnswer ? question.marks : 0);
+    return total + (isCorrectAnswer(question, answerMap.get(String(question._id))) ? question.marks : 0);
   }, 0);
   const totalMarks = questions.reduce((total, question) => total + question.marks, 0) || exam.totalMarks;
   const percentage = Math.round((score / totalMarks) * 10000) / 100;
@@ -195,3 +205,4 @@ async function resultRows() {
     status: result.status
   }));
 }
+

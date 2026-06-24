@@ -68,27 +68,27 @@ export default function StudentExamDetails() {
   }
 
   return (
-    <main className="min-h-screen bg-[#edf4fb] px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#edf4fb] px-3 py-4 text-slate-950 sm:px-6 sm:py-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-5">
         <button className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#0f88d2] shadow-sm transition hover:bg-[#f8fbff]" onClick={() => window.close() || navigate("/student/courses")} type="button">
           <ArrowLeft size={18} /> Back to exams
         </button>
 
-        <section className="overflow-hidden rounded-3xl bg-white shadow-[0_24px_70px_rgba(30,41,59,0.14)]">
-          <div className="relative h-64 overflow-hidden sm:h-80 lg:h-[360px]">
+        <section className="overflow-hidden rounded-2xl sm:rounded-3xl bg-white shadow-[0_24px_70px_rgba(30,41,59,0.14)]">
+          <div className="relative h-56 overflow-hidden sm:h-80 lg:h-[360px]">
             <img className="h-full w-full object-cover" src={image} alt={`${exam.courseId?.courseName || "Course"} cover`} />
             <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/5" />
-            <div className="absolute bottom-6 left-6 right-6 text-white sm:bottom-9 sm:left-9 sm:right-9">
+            <div className="absolute bottom-5 left-5 right-5 text-white sm:bottom-9 sm:left-9 sm:right-9">
               <p className="mb-3 inline-flex rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-[#0f88d2] shadow-sm">{exam.courseId?.courseCode || "COURSE"}</p>
-              <h1 className="max-w-3xl text-3xl font-semibold tracking-tight sm:text-5xl">{exam.title}</h1>
+              <h1 className="max-w-3xl text-2xl font-semibold tracking-tight sm:text-5xl">{exam.title}</h1>
               <p className="mt-3 text-base text-white/85 sm:text-xl">{exam.courseId?.courseName}</p>
             </div>
           </div>
 
-          <div className="grid gap-8 p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:p-10">
-            <div className="space-y-9">
+          <div className="grid gap-6 p-4 sm:gap-8 sm:p-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:p-10">
+            <div className="space-y-7 sm:space-y-9">
               <section>
-                <h2 className="text-2xl font-semibold text-slate-950">About This Exam</h2>
+                <h2 className="text-xl font-semibold text-slate-950 sm:text-2xl">About This Exam</h2>
                 <p className="mt-4 max-w-4xl leading-8 text-slate-600">
                   {exam.description || "Read all questions carefully. The timer starts only when this exam is live and you press Start Exam. Your answers are saved automatically while you move through the exam."}
                 </p>
@@ -97,20 +97,20 @@ export default function StudentExamDetails() {
                 </div>
 
                 <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  <div className="rounded-2xl bg-[#edf6ff] p-5">
+                  <div className="rounded-xl bg-[#edf6ff] p-4 sm:rounded-2xl sm:p-5">
                     <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-[#0f88d2]"><Clock3 size={17} /> Duration</div>
-                    <p className="text-2xl font-semibold text-slate-950">{totalDuration} min</p>
+                    <p className="text-xl font-semibold text-slate-950 sm:text-2xl">{totalDuration} min</p>
                     {extraTimeMinutes > 0 && <p className="mt-1 text-sm font-semibold text-amber-700">Includes +{extraTimeMinutes} min extra</p>}
                   </div>
-                  <div className="rounded-2xl bg-[#eefbf4] p-5">
+                  <div className="rounded-xl bg-[#eefbf4] p-4 sm:rounded-2xl sm:p-5">
                     <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-emerald-700"><Scale size={17} /> Exam Weight</div>
-                    <p className="text-2xl font-semibold text-slate-950">{exam.totalMarks} marks</p>
+                    <p className="text-xl font-semibold text-slate-950 sm:text-2xl">{exam.totalMarks} marks</p>
                   </div>
-                  <div className="rounded-2xl bg-[#fff7ed] p-5">
+                  <div className="rounded-xl bg-[#fff7ed] p-4 sm:rounded-2xl sm:p-5">
                     <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-orange-700"><Clock3 size={17} /> Start Time</div>
                     <p className="font-semibold text-slate-950">{startDate.toLocaleString()}</p>
                   </div>
-                  <div className="rounded-2xl bg-[#fdf2f8] p-5">
+                  <div className="rounded-xl bg-[#fdf2f8] p-4 sm:rounded-2xl sm:p-5">
                     <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-pink-700"><CalendarDays size={17} /> End Time</div>
                     <p className="font-semibold text-slate-950">{endDate.toLocaleString()}</p>
                   </div>
@@ -118,7 +118,7 @@ export default function StudentExamDetails() {
               </section>
 
               <section>
-                <h2 className="text-2xl font-semibold text-slate-950">Exam Policy</h2>
+                <h2 className="text-xl font-semibold text-slate-950 sm:text-2xl">Exam Policy</h2>
                 <div className="mt-5 grid gap-4 md:grid-cols-2">
                   {[
                     "Cheating, copying, screenshots, outside help, or using unauthorized materials is not allowed.",
@@ -128,7 +128,7 @@ export default function StudentExamDetails() {
                     "Use Clear Choice if you want to remove an answer and select another option.",
                     "Final score is calculated immediately after submission based on the answer key."
                   ].map((item, index) => (
-                    <div key={item} className="flex gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                    <div key={item} className="flex gap-3 rounded-xl border border-slate-100 bg-white p-4 sm:rounded-2xl shadow-sm">
                       {index === 0 ? <AlertTriangle className="mt-0.5 shrink-0 text-red-500" size={19} /> : <CheckCircle2 className="mt-0.5 shrink-0 text-[#1e9bf0]" size={19} />}
                       <p className="text-sm leading-6 text-slate-600">{item}</p>
                     </div>
@@ -137,7 +137,7 @@ export default function StudentExamDetails() {
               </section>
             </div>
 
-            <aside className="rounded-2xl bg-[#f8fbff] p-5 lg:sticky lg:top-6 lg:self-start">
+            <aside className="rounded-xl bg-[#f8fbff] p-4 sm:rounded-2xl sm:p-5 lg:sticky lg:top-6 lg:self-start">
               <h3 className="text-lg font-semibold text-slate-950">Exam Summary</h3>
               <div className="mt-5 space-y-3 text-sm">
                 <div className="flex items-center justify-between rounded-xl bg-white p-3"><span className="flex items-center gap-2 text-slate-500"><Clock3 size={16} /> Duration</span><strong>{totalDuration} min</strong></div>
@@ -158,3 +158,4 @@ export default function StudentExamDetails() {
     </main>
   );
 }
+

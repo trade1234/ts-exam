@@ -20,7 +20,7 @@ export default function ExamScreen() {
   const extraMinutes = initial?.exam?.extraTimeMinutes || 0;
   const [remaining, setRemaining] = useState(() => {
     if (!initial) return 0;
-    const now = Date.now();
+    const now = initial.exam.isPaused && initial.exam.pausedAt ? new Date(initial.exam.pausedAt).getTime() : Date.now();
     const elapsed = Math.floor((now - new Date(initial.attempt.startedAt).getTime()) / 1000);
     const durationRemaining = (initial.exam.durationMinutes + extraMinutes) * 60 - elapsed;
     const endDateRemaining = Math.floor((new Date(initial.exam.endDate).getTime() - now) / 1000);
@@ -29,6 +29,8 @@ export default function ExamScreen() {
 
   const question = bundle?.questions?.[index];
   const selectedAnswer = question ? answers[question._id]?.selectedAnswer || "" : "";
+  const isShortAnswer = question?.questionType === "SHORT_ANSWER";
+  const isTrueFalse = question?.questionType === "TRUE_FALSE";
   const answeredCount = bundle?.questions.filter((item) => answers[item._id]?.selectedAnswer).length || 0;
   const unansweredCount = (bundle?.questions.length || 0) - answeredCount;
 
@@ -63,9 +65,10 @@ export default function ExamScreen() {
         setIsPaused(Boolean(latestExam.isPaused));
         setBundle((current) => current ? { ...current, exam: latestExam } : current);
         setRemaining((current) => {
-          const elapsed = Math.floor((Date.now() - new Date(bundle.attempt.startedAt).getTime()) / 1000);
+          const referenceTime = latestExam.isPaused && latestExam.pausedAt ? new Date(latestExam.pausedAt).getTime() : Date.now();
+          const elapsed = Math.floor((referenceTime - new Date(bundle.attempt.startedAt).getTime()) / 1000);
           const durationRemaining = ((latestExam.durationMinutes || 0) + (latestExam.extraTimeMinutes || 0)) * 60 - elapsed;
-          const endDateRemaining = Math.floor((new Date(latestExam.endDate).getTime() - Date.now()) / 1000);
+          const endDateRemaining = Math.floor((new Date(latestExam.endDate).getTime() - referenceTime) / 1000);
           const refreshedRemaining = Math.max(Math.min(durationRemaining, endDateRemaining), 0);
           return refreshedRemaining > current ? refreshedRemaining : current;
         });
@@ -108,11 +111,11 @@ export default function ExamScreen() {
     }
   }
 
-  function selectOption(letter) {
+  function setAnswer(value) {
     setAnswers((current) => ({
       ...current,
       [question._id]: {
-        selectedAnswer: letter,
+        selectedAnswer: value,
         markedForReview: current[question._id]?.markedForReview || false
       }
     }));
@@ -133,8 +136,8 @@ export default function ExamScreen() {
 
   return (
     <div className="min-h-screen bg-portal">
-      <header className="border-b border-blue-100 bg-white px-4 py-4">
-        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-3 sm:flex-row sm:items-center">
+      <header className="border-b border-blue-100 bg-white px-3 py-3 sm:px-4 sm:py-4">
+        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-3 md:flex-row md:items-center">
           <Brand />
           <div className="text-sm md:text-right">
             <p className="font-bold">{bundle.exam.courseId?.courseName}</p>
@@ -146,7 +149,7 @@ export default function ExamScreen() {
                 +{extraMinutes} Min Extra Time
               </span>
             )}
-            <div className="rounded-xl bg-blue-600 px-4 py-2 text-center text-base font-bold text-white sm:text-lg">{minutes}:{seconds}</div>
+            <div className="rounded-xl bg-blue-600 px-3 py-2 text-center text-base font-bold text-white sm:px-4 sm:text-lg">{minutes}:{seconds}</div>
           </div>
         </div>
       </header>
@@ -161,10 +164,10 @@ export default function ExamScreen() {
           </div>
         </div>
       )}
-      <main className="mx-auto grid max-w-7xl gap-4 p-3 sm:p-4 lg:grid-cols-[260px_1fr]">
+      <main className="mx-auto grid max-w-7xl gap-3 p-3 sm:gap-4 sm:p-4 lg:grid-cols-[260px_1fr]">
         <aside className="card p-3 sm:p-4">
           <h2 className="mb-3 font-bold">Questions</h2>
-          <div className="grid grid-cols-6 gap-2 sm:grid-cols-8 lg:grid-cols-4">
+          <div className="grid grid-cols-4 gap-2 min-[380px]:grid-cols-6 sm:grid-cols-8 lg:grid-cols-4">
             {bundle.questions.map((item, itemIndex) => {
               const saved = answers[item._id];
               const state = saved?.markedForReview ? "bg-amber-100 text-amber-700" : saved?.selectedAnswer ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600";
@@ -181,28 +184,56 @@ export default function ExamScreen() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-blue-700">Question {index + 1} of {bundle.questions.length}</p>
-              <h1 className="mt-3 text-lg font-bold leading-7 sm:text-xl">{question.questionText}</h1>
+              <h1 className="mt-3 text-base font-bold leading-7 sm:text-xl">{question.questionText}</h1>
             </div>
           </div>
 
-          <fieldset className="mt-6 grid gap-3">
-            <legend className="sr-only">Answer choices</legend>
-            {["A", "B", "C", "D"].map((letter) => {
-              const isSelected = selectedAnswer === letter;
-              return (
-                <label key={letter} className={`flex cursor-pointer items-start gap-3 rounded-xl border bg-white p-3 text-slate-800 transition hover:border-slate-300 hover:bg-slate-50 sm:gap-4 sm:p-4 ${isSelected ? "border-slate-950 ring-2 ring-slate-950" : "border-slate-200"}`}>
-                  <input className="mt-1 h-5 w-5 accent-slate-950" type="radio" name={`question-${question._id}`} value={letter} checked={isSelected} onChange={() => selectOption(letter)} />
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${isSelected ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-700"}`}>
-                    {letter}
-                  </span>
-                  <span className="pt-1 font-semibold leading-7">{question[`option${letter}`]}</span>
-                </label>
-              );
-            })}
-          </fieldset>
+          {isShortAnswer ? (
+            <label className="mt-6 block">
+              <span className="mb-2 block text-sm font-semibold text-slate-600">Your answer</span>
+              <textarea
+                className="min-h-36 w-full rounded-xl border border-slate-200 bg-white p-4 text-base font-medium leading-7 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10"
+                placeholder="Type your short answer here"
+                value={selectedAnswer}
+                onChange={(event) => setAnswer(event.target.value)}
+              />
+            </label>
+          ) : isTrueFalse ? (
+            <fieldset className="mt-6 grid gap-3 sm:grid-cols-2">
+              <legend className="sr-only">True or false answer</legend>
+              {[
+                { value: "TRUE", label: "True" },
+                { value: "FALSE", label: "False" }
+              ].map((choice) => {
+                const isSelected = selectedAnswer === choice.value;
+                return (
+                  <label key={choice.value} className={`flex cursor-pointer items-center gap-3 rounded-xl border bg-white p-4 text-slate-800 transition hover:border-slate-300 hover:bg-slate-50 ${isSelected ? "border-slate-950 ring-2 ring-slate-950" : "border-slate-200"}`}>
+                    <input className="h-5 w-5 accent-slate-950" type="radio" name={`question-${question._id}`} value={choice.value} checked={isSelected} onChange={() => setAnswer(choice.value)} />
+                    <span className="text-base font-bold">{choice.label}</span>
+                  </label>
+                );
+              })}
+            </fieldset>
+          ) : (
+            <fieldset className="mt-6 grid gap-3">
+              <legend className="sr-only">Answer choices</legend>
+              {["A", "B", "C", "D"].map((letter) => {
+                const isSelected = selectedAnswer === letter;
+                return (
+                  <label key={letter} className={`flex cursor-pointer items-start gap-3 rounded-xl border bg-white p-3 text-slate-800 transition hover:border-slate-300 hover:bg-slate-50 sm:gap-4 sm:p-4 ${isSelected ? "border-slate-950 ring-2 ring-slate-950" : "border-slate-200"}`}>
+                    <input className="mt-1 h-5 w-5 accent-slate-950" type="radio" name={`question-${question._id}`} value={letter} checked={isSelected} onChange={() => setAnswer(letter)} />
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${isSelected ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-700"}`}>
+                      {letter}
+                    </span>
+                    <span className="pt-1 font-semibold leading-7">{question[`option${letter}`]}</span>
+                  </label>
+                );
+              })}
+            </fieldset>
+          )}
 
           <div className="mt-4 rounded-lg bg-slate-50 px-4 py-3 text-sm font-medium text-slate-600">
-            Answer key selected: <span className="font-bold text-slate-950">{selectedAnswer || "No choice selected"}</span>
+            Current answer: <span className="font-bold text-slate-950">{selectedAnswer || (isShortAnswer ? "No answer typed" : "No choice selected")}</span>
           </div>
 
           <div className="mt-8 grid gap-3 sm:flex sm:flex-wrap sm:justify-between">
@@ -251,4 +282,8 @@ export default function ExamScreen() {
     </div>
   );
 }
+
+
+
+
 

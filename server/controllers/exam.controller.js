@@ -5,6 +5,16 @@ import { ExamAttempt } from "../models/ExamAttempt.js";
 import { Answer } from "../models/Answer.js";
 import { logActivity } from "../utils/logger.js";
 
+function normalizeAnswer(value = "") {
+  return String(value).trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function isCorrectAnswer(question, selectedAnswer) {
+  if (question.questionType === "SHORT_ANSWER") {
+    return normalizeAnswer(selectedAnswer) === normalizeAnswer(question.correctAnswer);
+  }
+  return selectedAnswer === question.correctAnswer;
+}
 export const examSchema = z.object({
   body: z.object({
     courseId: z.string().min(1),
@@ -148,7 +158,7 @@ export async function submitExam(req, res, next) {
     const answers = await Answer.find({ attemptId: attempt._id });
     const answerMap = new Map(answers.map((answer) => [String(answer.questionId), answer.selectedAnswer]));
     const score = questions.reduce((total, question) => {
-      return total + (answerMap.get(String(question._id)) === question.correctAnswer ? question.marks : 0);
+      return total + (isCorrectAnswer(question, answerMap.get(String(question._id))) ? question.marks : 0);
     }, 0);
     const totalMarks = questions.reduce((total, question) => total + question.marks, 0) || exam.totalMarks;
     const percentage = Math.round((score / totalMarks) * 10000) / 100;
@@ -161,7 +171,7 @@ export async function submitExam(req, res, next) {
 
     await logActivity(req, "SUBMIT_EXAM", `Submitted exam: "${exam.title}". Score: ${score}/${totalMarks} (${percentage}%, status: ${attempt.status})`);
 
-    res.json({ attempt, totalQuestions: questions.length, correctAnswers: questions.filter((q) => answerMap.get(String(q._id)) === q.correctAnswer).length });
+    res.json({ attempt, totalQuestions: questions.length, correctAnswers: questions.filter((q) => isCorrectAnswer(q, answerMap.get(String(q._id)))).length });
   } catch (error) {
     next(error);
   }

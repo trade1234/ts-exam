@@ -4,13 +4,28 @@ import { Question } from "../models/Question.js";
 export const questionSchema = z.object({
   body: z.object({
     examId: z.string().min(1),
+    questionType: z.enum(["MULTIPLE_CHOICE", "TRUE_FALSE", "SHORT_ANSWER"]).default("MULTIPLE_CHOICE"),
     questionText: z.string().min(3),
-    optionA: z.string().min(1),
-    optionB: z.string().min(1),
-    optionC: z.string().min(1),
-    optionD: z.string().min(1),
-    correctAnswer: z.enum(["A", "B", "C", "D"]),
-    marks: z.coerce.number().min(1).default(1)
+    optionA: z.string().optional().default(""),
+    optionB: z.string().optional().default(""),
+    optionC: z.string().optional().default(""),
+    optionD: z.string().optional().default(""),
+    correctAnswer: z.string().min(1),
+    marks: z.coerce.number().min(0.1).default(1)
+  }).superRefine((question, ctx) => {
+    if (question.questionType === "MULTIPLE_CHOICE") {
+      ["optionA", "optionB", "optionC", "optionD"].forEach((field) => {
+        if (!question[field]) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, path: [field], message: "Option is required" });
+        }
+      });
+      if (!["A", "B", "C", "D"].includes(question.correctAnswer)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["correctAnswer"], message: "Answer must be A, B, C, or D" });
+      }
+    }
+    if (question.questionType === "TRUE_FALSE" && !["TRUE", "FALSE"].includes(question.correctAnswer)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["correctAnswer"], message: "Answer must be TRUE or FALSE" });
+    }
   })
 });
 
@@ -60,4 +75,5 @@ export async function deleteQuestion(req, res, next) {
     next(error);
   }
 }
+
 
