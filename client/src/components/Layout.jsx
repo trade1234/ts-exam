@@ -179,9 +179,9 @@ export default function Layout({ role }) {
         )}
 
         <div className="mx-auto min-h-screen max-w-[1500px] overflow-hidden bg-white shadow-[0_26px_70px_rgba(35,45,70,0.18)] transition-colors dark:bg-[#141f33] dark:shadow-[0_26px_70px_rgba(0,0,0,0.38)] lg:min-h-[calc(100vh-4rem)] lg:rounded-xl">
-          <div className="grid min-h-screen lg:min-h-[calc(100vh-4rem)] xl:grid-cols-[280px_1fr]">
-            <aside className="hidden border-r border-slate-100 bg-white transition-colors dark:border-slate-800 dark:bg-[#111a2b] xl:flex xl:flex-col">
-              <div className="flex h-[92px] items-center gap-4 border-b border-slate-100 px-8 transition-colors dark:border-slate-800">
+          <div className="grid min-h-screen lg:min-h-[calc(100vh-4rem)] lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]">
+            <aside className="hidden border-r border-slate-100 bg-white transition-colors dark:border-slate-800 dark:bg-[#111a2b] lg:flex lg:flex-col">
+              <div className="flex h-[92px] items-center gap-4 border-b border-slate-100 px-5 xl:px-8 transition-colors dark:border-slate-800">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white p-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-950">
                   <img className="h-full w-full object-contain" src={logoUrl} alt="Trade Ethiopia logo" />
                 </div>
@@ -192,10 +192,10 @@ export default function Layout({ role }) {
               </div>
 
               <nav className="flex-1 px-0 py-9">
-                <p className="mb-6 px-9 text-sm uppercase text-slate-400 dark:text-slate-500">Menu</p>
-                <div className="space-y-3 px-6">
+                <p className="mb-6 px-5 text-sm uppercase xl:px-9 text-slate-400 dark:text-slate-500">Menu</p>
+                <div className="space-y-3 px-4 xl:px-6">
                   {links.map(({ to, label, icon: Icon }) => (
-                    <NavLink key={to} end to={to} className={({ isActive }) => `group flex min-h-12 items-center gap-4 rounded-xl border px-4 py-3 text-base font-semibold shadow-sm transition ${isActive ? "border-[#1e9bf0] bg-[#edf6ff] text-[#0f88d2] shadow-blue-100 dark:border-[#38bdf8] dark:bg-[#17324d] dark:text-[#7dd3fc] dark:shadow-none" : "border-slate-100 bg-white text-slate-700 hover:border-blue-100 hover:bg-slate-50 dark:border-slate-800 dark:bg-[#111a2b] dark:text-slate-300 dark:hover:bg-slate-800/70"}`}>
+                    <NavLink key={to} end to={to} className={({ isActive }) => `group flex min-h-12 items-center gap-4 rounded-xl border px-4 py-3 text-sm font-semibold shadow-sm xl:text-base transition ${isActive ? "border-[#1e9bf0] bg-[#edf6ff] text-[#0f88d2] shadow-blue-100 dark:border-[#38bdf8] dark:bg-[#17324d] dark:text-[#7dd3fc] dark:shadow-none" : "border-slate-100 bg-white text-slate-700 hover:border-blue-100 hover:bg-slate-50 dark:border-slate-800 dark:bg-[#111a2b] dark:text-slate-300 dark:hover:bg-slate-800/70"}`}>
                       {({ isActive }) => (
                         <>
                           <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition ${isActive ? "bg-[#1e9bf0] text-white" : "bg-slate-100 text-slate-500 group-hover:bg-blue-50 group-hover:text-[#0f88d2] dark:bg-slate-800 dark:text-slate-400"}`}>
@@ -208,8 +208,8 @@ export default function Layout({ role }) {
                   ))}
                 </div>
 
-                <p className="mb-6 mt-12 px-9 text-sm uppercase text-slate-400 dark:text-slate-500">Groups</p>
-                <div className="space-y-3 px-6">
+                <p className="mb-6 mt-12 px-5 text-sm uppercase xl:px-9 text-slate-400 dark:text-slate-500">Groups</p>
+                <div className="space-y-3 px-4 xl:px-6">
                   {groups.map((group, index) => (
                     <button key={group.label} className="flex min-h-11 w-full items-center gap-4 rounded-xl border border-slate-100 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-800 shadow-sm transition hover:border-blue-100 hover:bg-slate-50 dark:border-slate-800 dark:bg-[#111a2b] dark:text-slate-300 dark:hover:bg-slate-800/70" type="button" onClick={() => navigate(group.to)}>
                       <span className={`h-4 w-4 rounded-full border-2 ${["border-[#f59e0b]", "border-[#8b5cf6]", "border-[#ec4899]", "border-[#10b981]"][index]}`} />
@@ -219,7 +219,7 @@ export default function Layout({ role }) {
                 </div>
               </nav>
 
-              <div className="px-9 py-8">
+              <div className="px-5 py-8 xl:px-9">
                 <button className="flex w-full items-center justify-between rounded-xl bg-slate-50 px-4 py-3 text-base font-medium text-slate-700 transition hover:bg-slate-100 dark:bg-slate-800/70 dark:text-slate-200 dark:hover:bg-slate-700" type="button" onClick={() => setDarkMode((value) => !value)}>
                   <span className="flex items-center gap-3">
                     {darkMode ? <Sun size={19} className="text-amber-300" /> : <Moon size={19} className="text-slate-400" />}
@@ -233,7 +233,7 @@ export default function Layout({ role }) {
             </aside>
 
             <main className="min-w-0 bg-[#fafafa] transition-colors dark:bg-[#0f172a]">
-              <header className="sticky top-0 z-20 flex min-h-[76px] items-center justify-between gap-3 border-b border-slate-100 bg-white px-4 transition-colors dark:border-slate-800 dark:bg-[#111a2b] sm:min-h-[92px] sm:px-6 lg:px-10 xl:px-16">
+              <header className="sticky top-0 z-20 flex min-h-[76px] items-center justify-between gap-3 border-b border-slate-100 bg-white px-4 transition-colors dark:border-slate-800 dark:bg-[#111a2b] sm:min-h-[92px] sm:px-6 lg:px-8 xl:px-16">
                 <div className="flex min-w-0 items-center gap-3 sm:hidden">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-950">
                     <img className="h-full w-full object-contain" src={logoUrl} alt="Trade Ethiopia logo" />
@@ -248,7 +248,7 @@ export default function Layout({ role }) {
                   <input className="w-full max-w-md bg-transparent text-base outline-none placeholder:text-slate-500 dark:text-slate-100 dark:placeholder:text-slate-500" placeholder="Search..." />
                 </div>
                 <div className="flex shrink-0 items-center gap-2 sm:gap-5">
-                  <button className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-600 transition hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 xl:hidden" type="button" onClick={() => setDarkMode((value) => !value)} aria-label="Toggle dark mode">
+                  <button className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-600 transition hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 lg:hidden" type="button" onClick={() => setDarkMode((value) => !value)} aria-label="Toggle dark mode">
                     {darkMode ? <Sun size={19} /> : <Moon size={19} />}
                   </button>
 
@@ -319,11 +319,11 @@ export default function Layout({ role }) {
                 </div>
               </header>
 
-              <section className="min-w-0 px-3 pb-24 pt-5 sm:px-6 lg:px-10 xl:px-16 lg:py-12 xl:py-16">
+              <section className="min-w-0 px-3 pb-24 pt-5 sm:px-6 lg:px-8 xl:px-16 lg:py-12 xl:py-16">
                 <Outlet />
               </section>
 
-              <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-2 py-2 shadow-[0_-12px_30px_rgba(15,23,42,0.14)] backdrop-blur dark:border-slate-800 dark:bg-[#111a2b]/95 xl:hidden">
+              <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-2 py-2 shadow-[0_-12px_30px_rgba(15,23,42,0.14)] backdrop-blur dark:border-slate-800 dark:bg-[#111a2b]/95 lg:hidden">
                 <div className="mx-auto flex max-w-2xl gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid" style={{ gridTemplateColumns: `repeat(${links.length}, minmax(0, 1fr))` }}>
                   {links.map(({ to, label, icon: Icon }) => (
                     <NavLink key={to} end to={to} className={({ isActive }) => `flex min-h-14 min-w-[72px] flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[10px] font-bold transition sm:min-w-0 sm:text-[11px] ${isActive ? "bg-[#0f88d2] text-white dark:bg-[#1e9bf0]" : "text-slate-500 hover:bg-blue-50 hover:text-[#0f88d2] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-[#7dd3fc]"}` }>
@@ -340,6 +340,7 @@ export default function Layout({ role }) {
     </div>
   );
 }
+
 
 
 
