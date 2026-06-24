@@ -1,9 +1,10 @@
 import axios from "axios";
 
-const configuredApiUrl = import.meta.env.VITE_API_URL;
-const isLocalApiUrl = configuredApiUrl && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(configuredApiUrl);
+const configuredApiUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
+const isLocalApiUrl = configuredApiUrl && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?($|\/)/.test(configuredApiUrl);
+const normalizedConfiguredApiUrl = configuredApiUrl && !configuredApiUrl.endsWith("/api") ? `${configuredApiUrl}/api` : configuredApiUrl;
 
-export const apiBaseURL = import.meta.env.PROD && isLocalApiUrl ? "" : configuredApiUrl || "/api";
+export const apiBaseURL = import.meta.env.PROD && isLocalApiUrl ? "" : normalizedConfiguredApiUrl || "/api";
 
 export const api = axios.create({
   baseURL: apiBaseURL
