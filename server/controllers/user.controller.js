@@ -70,6 +70,25 @@ export async function listStudents(req, res, next) {
   }
 }
 
+export async function updateStudent(req, res, next) {
+  try {
+    const student = await User.findOne({ _id: req.params.id, role: "STUDENT" }).select("+password");
+    if (!student) return res.status(404).json({ message: "Student not found" });
+
+    student.name = req.body.name;
+    student.batchYear = req.body.batchYear;
+    student.trainingTaken = req.body.trainingTaken;
+    if (typeof req.body.isActive === "boolean") student.isActive = req.body.isActive;
+    if (req.body.password) student.password = req.body.password;
+
+    await student.save();
+    const sanitized = student.toObject();
+    delete sanitized.password;
+    res.json(sanitized);
+  } catch (error) {
+    next(error);
+  }
+}
 export async function setStudentActive(req, res, next) {
   try {
     const user = await User.findOneAndUpdate(
@@ -139,4 +158,5 @@ export async function listActivityLogs(req, res, next) {
     next(error);
   }
 }
+
 

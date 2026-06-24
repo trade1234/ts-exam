@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Search, UserPlus, Copy, Check, Eye, EyeOff } from "lucide-react";
+import { Search, UserPlus, Copy, Check, Eye, EyeOff, Pencil } from "lucide-react";
 import DataTable from "../components/DataTable.jsx";
 import Modal from "../components/Modal.jsx";
 import { api } from "../services/api.js";
@@ -8,6 +8,7 @@ export default function Students() {
   const [rows, setRows] = useState([]);
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState(false);
+  const [editingStudent, setEditingStudent] = useState(null);
   const [form, setForm] = useState({ name: "", batchYear: new Date().getFullYear(), trainingTaken: "", password: "" });
 
   const trainingOptions = [
@@ -32,6 +33,7 @@ export default function Students() {
   }
 
   function openModal() {
+    setEditingStudent(null);
     setForm({ name: "", batchYear: new Date().getFullYear(), trainingTaken: "", password: "" });
     setCreated(null);
     setError("");
@@ -41,16 +43,46 @@ export default function Students() {
 
   function closeModal() {
     setModal(false);
+    setEditingStudent(null);
     setCreated(null);
     setError("");
     if (created) load();
   }
 
+  
+  function openEdit(row) {
+    setEditingStudent(row);
+    setForm({
+      name: row.name || "",
+      batchYear: row.batchYear || new Date().getFullYear(),
+      trainingTaken: row.trainingTaken || "",
+      password: "",
+      isActive: Boolean(row.isActive)
+    });
+    setCreated(null);
+    setError("");
+    setShowPassword(false);
+    setModal(true);
+  }
   async function save(e) {
     e.preventDefault();
     setLoading(true);
     setError("");
     try {
+      if (editingStudent) {
+        await api.put(`/users/students/${editingStudent._id}`, {
+          name: form.name,
+          batchYear: Number(form.batchYear),
+          trainingTaken: form.trainingTaken,
+          isActive: Boolean(form.isActive),
+          password: form.password
+        });
+        setModal(false);
+        setEditingStudent(null);
+        load();
+        return;
+      }
+
       const res = await api.post("/users/students", {
         name: form.name,
         batchYear: Number(form.batchYear),
@@ -59,7 +91,7 @@ export default function Students() {
       });
       setCreated(res.data);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to create student");
+      setError(err.response?.data?.message || (editingStudent ? "Failed to update student" : "Failed to create student"));
     } finally {
       setLoading(false);
     }
@@ -109,11 +141,16 @@ export default function Students() {
             {row.isActive ? "Active" : "Inactive"}
           </span>
         )},
-        { key: "actions", label: "Actions", render: (row) => <button className="btn-secondary" onClick={() => toggle(row)}>{row.isActive ? "Deactivate" : "Activate"}</button> }
+        { key: "actions", label: "Actions", render: (row) => (
+          <div className="flex flex-wrap gap-2">
+            <button className="btn-secondary" onClick={() => openEdit(row)}><Pencil size={14} /> Edit</button>
+            <button className="btn-secondary" onClick={() => toggle(row)}>{row.isActive ? "Deactivate" : "Activate"}</button>
+          </div>
+        ) }
       ]} rows={rows} />
 
       {modal && (
-        <Modal title={created ? "Student Created" : "Add New Student"} onClose={closeModal}>
+        <Modal title={created ? "Student Created" : editingStudent ? "Edit Student" : "Add New Student"} onClose={closeModal}>
           {!created ? (
             <form className="space-y-4" onSubmit={save}>
               {error && (
@@ -160,16 +197,16 @@ export default function Students() {
                 </select>
               </div>
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Password <span className="text-red-500">*</span></label>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{editingStudent ? "New Password" : "Password"} {!editingStudent && <span className="text-red-500">*</span>}</label>
                 <div className="relative">
                   <input
                     className="input pr-10"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Set password (min 6 characters)"
+                    placeholder={editingStudent ? "Leave blank to keep current password" : "Set password (min 6 characters)"}
                     value={form.password}
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    required
-                    minLength={6}
+                    required={!editingStudent}
+                    minLength={form.password ? 6 : undefined}
                   />
                   <button
                     type="button"
@@ -181,15 +218,26 @@ export default function Students() {
                   </button>
                 </div>
               </div>
+              {editingStudent && (
+                <label className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-800 dark:bg-[#0f172a] dark:text-slate-200">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-[#0f88d2]"
+                    checked={Boolean(form.isActive)}
+                    onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                  />
+                  Account active
+                </label>
+              )}
               <div className="grid gap-3 pt-2 sm:flex sm:items-center">
                 <button className="btn-primary" disabled={loading}>
                   {loading ? (
                     <span className="flex items-center gap-2">
                       <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" /></svg>
-                      Creating...
+                      {editingStudent ? "Saving..." : "Creating..."}
                     </span>
                   ) : (
-                    <><UserPlus size={16} /> Create Student</>
+                    <>{editingStudent ? <Pencil size={16} /> : <UserPlus size={16} />} {editingStudent ? "Save Student" : "Create Student"}</>
                   )}
                 </button>
                 <button type="button" className="btn-secondary" onClick={closeModal}>Cancel</button>
@@ -246,5 +294,7 @@ export default function Students() {
     </div>
   );
 }
+
+
 
 
