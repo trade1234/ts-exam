@@ -53,8 +53,8 @@ function ExamCard({ exam, index, now, onOpen }) {
           </div>
         </div>
 
-        <div className="p-5 sm:p-5 sm:p-7">
-          <h3 className="text-xl font-semibold text-slate-950 dark:text-slate-100">{exam.title}</h3>
+        <div className="p-4 sm:p-6 lg:p-7">
+          <h3 className="break-words text-lg font-semibold sm:text-xl text-slate-950 dark:text-slate-100">{exam.title}</h3>
           <p className="mt-2 text-sm font-medium text-[#0f88d2] dark:text-[#7dd3fc]">{exam.courseId?.courseName}</p>
           <p className="mt-5 min-h-16 text-sm leading-7 text-slate-500 dark:text-slate-400">
             {exam.description || "Review the instructions, check your time, and start the examination when it is live."}
@@ -72,7 +72,7 @@ function ExamCard({ exam, index, now, onOpen }) {
             </div>
           </div>
 
-          <div className="mt-5 space-y-2 text-sm text-slate-500 dark:text-slate-400">
+          <div className="mt-5 space-y-2 break-words text-sm text-slate-500 dark:text-slate-400">
             <div className="flex items-center gap-2"><CalendarDays size={16} /> Starts: {start ? start.toLocaleString() : "Available now"}</div>
             <div className="flex items-center gap-2"><Clock3 size={16} /> Ends: {end ? end.toLocaleString() : "Not set"}</div>
           </div>
@@ -83,8 +83,8 @@ function ExamCard({ exam, index, now, onOpen }) {
         </div>
       </article>
 
-      <div className="mt-5 rounded-xl bg-white p-5 shadow-[0_18px_45px_rgba(30,41,59,0.07)] dark:bg-[#111a2b] dark:shadow-[0_18px_45px_rgba(0,0,0,0.22)] sm:p-5 sm:p-7">
-        <div className="flex items-center gap-5 sm:p-7">
+      <div className="mt-4 rounded-xl bg-white p-4 shadow-[0_18px_45px_rgba(30,41,59,0.07)] dark:bg-[#111a2b] dark:shadow-[0_18px_45px_rgba(0,0,0,0.22)] sm:p-6 lg:p-7">
+        <div className="flex items-center gap-4 sm:gap-5">
           <div className="h-1.5 flex-1 rounded-full bg-slate-100 dark:bg-slate-800">
             <div className={`h-1.5 rounded-full ${progressColors[index % progressColors.length]}`} style={{ width: `${progress}%` }} />
           </div>
@@ -124,23 +124,23 @@ export default function StudentExams() {
 
   function openExam(examId, isOpen) {
     if (!isOpen) return;
-    window.open(`/student/exams/${examId}`, "_blank", "noopener,noreferrer");
+    window.open(`/#/student/exams/${examId}`, "_blank", "noopener,noreferrer");
   }
 
   return (
-    <div className="space-y-7 sm:space-y-10">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+    <div className="min-w-0 space-y-6 sm:space-y-10">
+      <div className="flex min-w-0 flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl text-slate-950 dark:text-slate-100">Exams</h1>
+          <h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl text-slate-950 dark:text-slate-100">Exams</h1>
           <p className="mt-2 text-slate-500 dark:text-slate-400">Open an exam only after the admin start time has arrived and before the end time.</p>
         </div>
         <select className="w-full rounded-lg border-0 bg-white px-5 py-4 text-base shadow-[0_18px_45px_rgba(30,41,59,0.07)] outline-none dark:bg-[#111a2b] dark:text-slate-100 sm:w-44" value={filter} onChange={(event) => setFilter(event.target.value)}>
           <option value="all">All exams</option>
-          <option value="available">Available now</option>
+          <option value="active">Available now</option>
         </select>
       </div>
 
-      <div className="grid gap-5 sm:p-6 md:grid-cols-2 xl:grid-cols-3 xl:gap-6 xl:gap-9">
+      <div className="grid min-w-0 gap-5 md:grid-cols-2 xl:grid-cols-3 xl:gap-9">
         {visibleExams.map((exam, index) => <ExamCard key={exam._id} exam={exam} index={index} now={now} onOpen={openExam} />)}
       </div>
 
@@ -152,6 +152,9 @@ export default function StudentExams() {
     </div>
   );
 }
+
+
+
 
 
 

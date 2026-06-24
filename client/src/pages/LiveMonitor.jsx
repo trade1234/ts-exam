@@ -64,17 +64,17 @@ export default function LiveMonitor() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+    <div className="min-w-0 space-y-6">
+      <div className="flex min-w-0 flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight text-slate-950 dark:text-slate-100">
+          <h1 className="flex items-center gap-2 text-2xl font-bold sm:text-3xl tracking-tight text-slate-950 dark:text-slate-100">
             <Radio className="text-emerald-500 animate-pulse" size={28} /> Live Security Monitor
           </h1>
           <p className="mt-1 text-slate-500 dark:text-slate-400">
             Real-time tracking of active student sessions, concurrent logins, and security activity logs.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="grid gap-3 sm:flex sm:flex-wrap sm:items-center">
           <label className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm shadow-sm dark:bg-[#111a2b] border border-blue-50/50 dark:border-slate-800">
             <input
               type="checkbox"
@@ -92,10 +92,10 @@ export default function LiveMonitor() {
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
-        <div className="card p-6 flex items-center justify-between border-l-4 border-emerald-500">
+        <div className="card flex min-w-0 items-center justify-between gap-3 p-4 sm:p-6 border-l-4 border-emerald-500">
           <div>
             <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Online Students</p>
-            <p className="mt-2 text-4xl font-extrabold text-slate-900 dark:text-white flex items-baseline gap-2">
+            <p className="mt-2 text-3xl font-extrabold sm:text-4xl text-slate-900 dark:text-white flex items-baseline gap-2">
               {onlineStudents.length}
               <span className="relative flex h-3 w-3 inline-block self-center">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -108,10 +108,10 @@ export default function LiveMonitor() {
           </div>
         </div>
 
-        <div className="card p-6 flex items-center justify-between border-l-4 border-blue-500">
+        <div className="card flex min-w-0 items-center justify-between gap-3 p-4 sm:p-6 border-l-4 border-blue-500">
           <div>
             <p className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Recent Activity Count</p>
-            <p className="mt-2 text-4xl font-extrabold text-slate-900 dark:text-white">{logs.length}</p>
+            <p className="mt-2 text-3xl font-extrabold sm:text-4xl text-slate-900 dark:text-white">{logs.length}</p>
           </div>
           <div className="h-12 w-12 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center text-blue-600 dark:text-blue-400">
             <Layers size={24} />
@@ -119,15 +119,15 @@ export default function LiveMonitor() {
         </div>
       </div>
 
-      <div className="flex border-b border-slate-200 dark:border-slate-800">
+      <div className="flex overflow-x-auto border-b border-slate-200 dark:border-slate-800">
         <button
-          className={`px-5 py-3 text-sm font-semibold border-b-2 transition ${activeSubTab === "online" ? "border-emerald-500 text-emerald-600 dark:text-emerald-400" : "border-transparent text-slate-500 hover:text-slate-700"}`}
+          className={`shrink-0 px-4 py-3 sm:px-5 text-sm font-semibold border-b-2 transition ${activeSubTab === "online" ? "border-emerald-500 text-emerald-600 dark:text-emerald-400" : "border-transparent text-slate-500 hover:text-slate-700"}`}
           onClick={() => setActiveSubTab("online")}
         >
           Online Students ({onlineStudents.length})
         </button>
         <button
-          className={`px-5 py-3 text-sm font-semibold border-b-2 transition ${activeSubTab === "logs" ? "border-emerald-500 text-emerald-600 dark:text-emerald-400" : "border-transparent text-slate-500 hover:text-slate-700"}`}
+          className={`shrink-0 px-4 py-3 sm:px-5 text-sm font-semibold border-b-2 transition ${activeSubTab === "logs" ? "border-emerald-500 text-emerald-600 dark:text-emerald-400" : "border-transparent text-slate-500 hover:text-slate-700"}`}
           onClick={() => setActiveSubTab("logs")}
         >
           Activity & Security Logs ({logs.length})
@@ -207,3 +207,5 @@ export default function LiveMonitor() {
     </div>
   );
 }
+
+

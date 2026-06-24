@@ -139,11 +139,11 @@ export default function ExamScreen() {
       <header className="border-b border-blue-100 bg-white px-3 py-3 sm:px-4 sm:py-4">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-3 md:flex-row md:items-center">
           <Brand />
-          <div className="text-sm md:text-right">
-            <p className="font-bold">{bundle.exam.courseId?.courseName}</p>
-            <p className="text-slate-500">{bundle.exam.title}</p>
+          <div className="min-w-0 text-sm md:text-right">
+            <p className="break-words font-bold">{bundle.exam.courseId?.courseName}</p>
+            <p className="break-words text-slate-500">{bundle.exam.title}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {extraMinutes > 0 && (
               <span className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-white animate-pulse">
                 +{extraMinutes} Min Extra Time
@@ -164,8 +164,8 @@ export default function ExamScreen() {
           </div>
         </div>
       )}
-      <main className="mx-auto grid max-w-7xl gap-3 p-3 sm:gap-4 sm:p-4 lg:grid-cols-[260px_1fr]">
-        <aside className="card p-3 sm:p-4">
+      <main className="mx-auto grid max-w-7xl gap-3 p-3 sm:gap-4 sm:p-4 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
+        <aside className="card min-w-0 p-3 sm:p-4">
           <h2 className="mb-3 font-bold">Questions</h2>
           <div className="grid grid-cols-4 gap-2 min-[380px]:grid-cols-6 sm:grid-cols-8 lg:grid-cols-4">
             {bundle.questions.map((item, itemIndex) => {
@@ -180,11 +180,11 @@ export default function ExamScreen() {
             <p>Gray: Unanswered</p>
           </div>
         </aside>
-        <section className="card p-4 sm:p-5">
+        <section className="card min-w-0 p-4 sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-blue-700">Question {index + 1} of {bundle.questions.length}</p>
-              <h1 className="mt-3 text-base font-bold leading-7 sm:text-xl">{question.questionText}</h1>
+              <h1 className="mt-3 break-words text-base font-bold leading-7 sm:text-xl">{question.questionText}</h1>
             </div>
           </div>
 
@@ -225,14 +225,14 @@ export default function ExamScreen() {
                     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold ${isSelected ? "bg-slate-950 text-white" : "bg-slate-100 text-slate-700"}`}>
                       {letter}
                     </span>
-                    <span className="pt-1 font-semibold leading-7">{question[`option${letter}`]}</span>
+                    <span className="min-w-0 break-words pt-1 font-semibold leading-7">{question[`option${letter}`]}</span>
                   </label>
                 );
               })}
             </fieldset>
           )}
 
-          <div className="mt-4 rounded-lg bg-slate-50 px-4 py-3 text-sm font-medium text-slate-600">
+          <div className="mt-4 break-words rounded-lg bg-slate-50 px-4 py-3 text-sm font-medium text-slate-600">
             Current answer: <span className="font-bold text-slate-950">{selectedAnswer || (isShortAnswer ? "No answer typed" : "No choice selected")}</span>
           </div>
 
@@ -282,6 +282,7 @@ export default function ExamScreen() {
     </div>
   );
 }
+
 
 
 

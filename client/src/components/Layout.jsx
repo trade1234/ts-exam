@@ -233,28 +233,28 @@ export default function Layout({ role }) {
             </aside>
 
             <main className="min-w-0 bg-[#fafafa] transition-colors dark:bg-[#0f172a]">
-              <header className="sticky top-0 z-20 flex min-h-[76px] items-center justify-between gap-3 border-b border-slate-100 bg-white px-4 transition-colors dark:border-slate-800 dark:bg-[#111a2b] sm:min-h-[92px] sm:px-6 lg:px-8 xl:px-16">
-                <div className="flex min-w-0 items-center gap-3 sm:hidden">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+              <header className="sticky top-0 z-20 flex min-h-[58px] items-center justify-between gap-2 border-b border-slate-100 bg-white px-3 transition-colors dark:border-slate-800 dark:bg-[#111a2b] min-[420px]:min-h-[68px] min-[420px]:px-4 sm:min-h-[92px] sm:px-6 lg:px-8 xl:px-16">
+                <div className="flex min-w-0 flex-1 items-center gap-2 sm:hidden">
+                  <div className="flex h-9 w-9 shrink-0 min-[420px]:h-11 min-[420px]:w-11 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-950">
                     <img className="h-full w-full object-contain" src={logoUrl} alt="Trade Ethiopia logo" />
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-slate-950 dark:text-slate-100">Trade Ethiopia SBI</p>
-                    <p className="truncate text-xs text-slate-500 dark:text-slate-400">{role === "ADMIN" ? "Admin" : "Exams"}</p>
+                    <p className="truncate text-[11px] font-bold min-[420px]:text-sm text-slate-950 dark:text-slate-100">Trade Ethiopia SBI</p>
+                    <p className="hidden truncate text-xs text-slate-500 min-[420px]:block dark:text-slate-400">{role === "ADMIN" ? "Admin" : "Exams"}</p>
                   </div>
                 </div>
                 <div className="hidden min-w-0 flex-1 items-center gap-4 sm:flex">
                   <Search size={22} className="text-slate-500 dark:text-slate-400" />
                   <input className="w-full max-w-md bg-transparent text-base outline-none placeholder:text-slate-500 dark:text-slate-100 dark:placeholder:text-slate-500" placeholder="Search..." />
                 </div>
-                <div className="flex shrink-0 items-center gap-2 sm:gap-5">
-                  <button className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-600 transition hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 lg:hidden" type="button" onClick={() => setDarkMode((value) => !value)} aria-label="Toggle dark mode">
+                <div className="flex shrink-0 items-center gap-1.5 sm:gap-5">
+                  <button className="hidden h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-600 transition hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 min-[420px]:inline-flex lg:hidden" type="button" onClick={() => setDarkMode((value) => !value)} aria-label="Toggle dark mode">
                     {darkMode ? <Sun size={19} /> : <Moon size={19} />}
                   </button>
 
                   <div className="relative">
-                    <button className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-600 transition hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700" type="button" aria-label="Notifications" onClick={() => setNotificationsOpen((value) => !value)}>
-                      <Bell size={22} />
+                    <button className="relative inline-flex h-9 w-9 items-center justify-center rounded-full bg-slate-50 text-slate-600 transition hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700" type="button" aria-label="Notifications" onClick={() => setNotificationsOpen((value) => !value)}>
+                      <Bell size={18} />
                       {unreadCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">{unreadCount}</span>}
                     </button>
 
@@ -287,8 +287,8 @@ export default function Layout({ role }) {
 
                   <div className="relative">
                     <button className="flex items-center gap-3 rounded-full pr-2 transition hover:bg-slate-50 dark:hover:bg-slate-800" type="button" onClick={() => setProfileOpen((value) => !value)} aria-label="Account menu">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#ff9b71] to-[#ec5cff] text-sm font-semibold text-white sm:h-12 sm:w-12 sm:text-lg">{initials}</div>
-                      <ChevronDown size={18} className={`text-slate-500 transition ${profileOpen ? "rotate-180" : ""}`} />
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#ff9b71] to-[#ec5cff] text-sm font-semibold text-white sm:h-12 sm:w-12 sm:text-lg">{initials}</div>
+                      <ChevronDown size={16} className={`hidden text-slate-500 transition min-[420px]:block ${profileOpen ? "rotate-180" : ""}`} />
                     </button>
 
                     {profileOpen && (
@@ -298,7 +298,7 @@ export default function Layout({ role }) {
                             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#ff9b71] to-[#ec5cff] text-base font-bold text-white">{initials}</div>
                             <div className="min-w-0">
                               <p className="truncate font-bold text-slate-950 dark:text-slate-100">{user?.name || "User"}</p>
-                              <p className="truncate text-xs text-slate-500 dark:text-slate-400">{user?.email || user?.enrollmentNumber}</p>
+                              <p className="hidden truncate text-xs text-slate-500 min-[420px]:block dark:text-slate-400">{user?.email || user?.enrollmentNumber}</p>
                             </div>
                           </div>
                         </div>
@@ -319,7 +319,7 @@ export default function Layout({ role }) {
                 </div>
               </header>
 
-              <section className="min-w-0 px-3 pb-24 pt-5 sm:px-6 lg:px-8 xl:px-16 lg:py-12 xl:py-16">
+              <section className="min-w-0 px-3 pb-24 pt-4 min-[420px]:px-4 min-[420px]:pt-5 sm:px-6 lg:px-8 xl:px-16 lg:py-12 xl:py-16">
                 <Outlet />
               </section>
 
@@ -340,6 +340,8 @@ export default function Layout({ role }) {
     </div>
   );
 }
+
+
 
 
 

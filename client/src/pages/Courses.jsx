@@ -38,15 +38,15 @@ export default function Courses() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row">
+    <div className="min-w-0 space-y-5">
+      <div className="flex min-w-0 flex-col justify-between gap-3 md:flex-row md:items-start">
         <div>
-          <h2 className="text-2xl font-bold">Courses</h2>
-          <p className="text-sm text-slate-500">Course catalog and available exams.</p>
+          <h2 className="break-words text-2xl font-bold">Courses</h2>
+          <p className="break-words text-sm text-slate-500">Course catalog and available exams.</p>
         </div>
-        {isAdmin && <button className="btn-primary" onClick={() => setModal(true)}><Plus size={16} /> Create Course</button>}
+        {isAdmin && <button className="btn-primary w-full sm:w-auto" onClick={() => setModal(true)}><Plus size={16} /> Create Course</button>}
       </div>
-      <label className="relative block max-w-md">
+      <label className="relative block w-full max-w-md">
         <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
         <input className="input pl-9" placeholder="Search courses" value={search} onChange={(e) => setSearch(e.target.value)} />
       </label>
@@ -121,4 +121,6 @@ export default function Courses() {
     </div>
   );
 }
+
+
 

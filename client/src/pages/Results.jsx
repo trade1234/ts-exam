@@ -50,14 +50,14 @@ export default function Results() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row">
+    <div className="min-w-0 space-y-5">
+      <div className="flex min-w-0 flex-col justify-between gap-3 md:flex-row md:items-start">
         <div>
-          <h2 className="text-2xl font-bold text-slate-950 dark:text-slate-100">Results</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Results appear after a student submits or when the exam timer finishes.</p>
+          <h2 className="break-words text-2xl font-bold text-slate-950 dark:text-slate-100">Results</h2>
+          <p className="break-words text-sm text-slate-500 dark:text-slate-400">Results appear after a student submits or when the exam timer finishes.</p>
         </div>
         {isAdmin && (
-          <div className="flex gap-2">
+          <div className="grid gap-2 sm:flex">
             <button className="btn-secondary" onClick={() => downloadFile("/results/export/pdf", "exam-results.pdf")}><Download size={16} /> PDF</button>
             <button className="btn-primary" onClick={() => downloadFile("/results/export/excel", "exam-results.xlsx")}><Download size={16} /> Excel</button>
           </div>
@@ -80,15 +80,15 @@ export default function Results() {
       </section>
 
       {isAdmin && (
-        <div className="flex border-b border-slate-200 dark:border-slate-800">
+        <div className="flex overflow-x-auto border-b border-slate-200 dark:border-slate-800">
           <button
-            className={`border-b-2 px-5 py-3 text-sm font-semibold transition ${activeTab === "completed" ? "border-blue-500 text-blue-600 dark:text-sky-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
+            className={`shrink-0 border-b-2 px-4 py-3 sm:px-5 text-sm font-semibold transition ${activeTab === "completed" ? "border-blue-500 text-blue-600 dark:text-sky-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
             onClick={() => setActiveTab("completed")}
           >
             Completed Exams ({completedRows.length})
           </button>
           <button
-            className={`border-b-2 px-5 py-3 text-sm font-semibold transition ${activeTab === "active" ? "border-blue-500 text-blue-600 dark:text-sky-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
+            className={`shrink-0 border-b-2 px-4 py-3 sm:px-5 text-sm font-semibold transition ${activeTab === "active" ? "border-blue-500 text-blue-600 dark:text-sky-400" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
             onClick={() => setActiveTab("active")}
           >
             Active Exams ({activeRows.length})
@@ -129,3 +129,4 @@ export default function Results() {
     </div>
   );
 }
+

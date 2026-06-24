@@ -80,17 +80,17 @@ export default function Students() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row">
+    <div className="min-w-0 space-y-5">
+      <div className="flex min-w-0 flex-col justify-between gap-3 md:flex-row md:items-start">
         <div>
-          <h2 className="text-2xl font-bold">Student Management</h2>
-          <p className="text-sm text-slate-500">Search, activate, deactivate, and add student accounts.</p>
+          <h2 className="break-words text-2xl font-bold">Student Management</h2>
+          <p className="break-words text-sm text-slate-500">Search, activate, deactivate, and add student accounts.</p>
         </div>
-        <button className="btn-primary" onClick={openModal}>
+        <button className="btn-primary w-full sm:w-auto" onClick={openModal}>
           <UserPlus size={16} /> Add Student
         </button>
       </div>
-      <label className="relative block max-w-md">
+      <label className="relative block w-full max-w-md">
         <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
         <input className="input pl-9" placeholder="Search students" value={search} onChange={(e) => setSearch(e.target.value)} />
       </label>
@@ -181,7 +181,7 @@ export default function Students() {
                   </button>
                 </div>
               </div>
-              <div className="flex items-center gap-3 pt-2">
+              <div className="grid gap-3 pt-2 sm:flex sm:items-center">
                 <button className="btn-primary" disabled={loading}>
                   {loading ? (
                     <span className="flex items-center gap-2">
@@ -196,7 +196,7 @@ export default function Students() {
               </div>
             </form>
           ) : (
-            <div className="space-y-5">
+            <div className="min-w-0 space-y-5">
               <div className="rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 p-5 dark:border-emerald-800 dark:from-emerald-900/20 dark:to-teal-900/20">
                 <div className="mb-3 flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
                   <Check size={20} />
@@ -209,8 +209,8 @@ export default function Students() {
                   </div>
                   <div>
                     <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Student ID</span>
-                    <div className="flex items-center gap-2">
-                      <p className="font-mono text-lg font-bold tracking-wider text-blue-700 dark:text-sky-400">{created.enrollmentNumber}</p>
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <p className="break-all font-mono text-base font-bold tracking-wider sm:text-lg text-blue-700 dark:text-sky-400">{created.enrollmentNumber}</p>
                       <button
                         className="rounded-md border border-blue-200 bg-white p-1.5 text-blue-600 transition hover:bg-blue-50 dark:border-slate-700 dark:bg-[#111a2b] dark:text-sky-400 dark:hover:bg-slate-800"
                         onClick={copyId}
@@ -233,7 +233,7 @@ export default function Students() {
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 The student can log in using their <strong>Student ID</strong> ({created.enrollmentNumber}) and the password you set.
               </p>
-              <div className="flex gap-3">
+              <div className="grid gap-3 sm:flex">
                 <button className="btn-primary" onClick={() => { setCreated(null); setForm({ name: "", batchYear: new Date().getFullYear(), trainingTaken: "", password: "" }); setShowPassword(false); }}>
                   <UserPlus size={16} /> Add Another
                 </button>
@@ -246,3 +246,5 @@ export default function Students() {
     </div>
   );
 }
+
+

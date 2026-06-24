@@ -80,12 +80,12 @@ export default function StudentExamDetails() {
             <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/5" />
             <div className="absolute bottom-5 left-5 right-5 text-white sm:bottom-9 sm:left-9 sm:right-9">
               <p className="mb-3 inline-flex rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-[#0f88d2] shadow-sm">{exam.courseId?.courseCode || "COURSE"}</p>
-              <h1 className="max-w-3xl text-2xl font-semibold tracking-tight sm:text-5xl">{exam.title}</h1>
-              <p className="mt-3 text-base text-white/85 sm:text-xl">{exam.courseId?.courseName}</p>
+              <h1 className="max-w-3xl break-words text-2xl font-semibold tracking-tight sm:text-5xl">{exam.title}</h1>
+              <p className="mt-3 break-words text-base text-white/85 sm:text-xl">{exam.courseId?.courseName}</p>
             </div>
           </div>
 
-          <div className="grid gap-6 p-4 sm:gap-8 sm:p-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:p-10">
+          <div className="grid gap-6 p-4 sm:gap-8 sm:p-8 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px] lg:p-10">
             <div className="space-y-7 sm:space-y-9">
               <section>
                 <h2 className="text-xl font-semibold text-slate-950 sm:text-2xl">About This Exam</h2>
@@ -108,11 +108,11 @@ export default function StudentExamDetails() {
                   </div>
                   <div className="rounded-xl bg-[#fff7ed] p-4 sm:rounded-2xl sm:p-5">
                     <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-orange-700"><Clock3 size={17} /> Start Time</div>
-                    <p className="font-semibold text-slate-950">{startDate.toLocaleString()}</p>
+                    <p className="break-words font-semibold text-slate-950">{startDate.toLocaleString()}</p>
                   </div>
                   <div className="rounded-xl bg-[#fdf2f8] p-4 sm:rounded-2xl sm:p-5">
                     <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-pink-700"><CalendarDays size={17} /> End Time</div>
-                    <p className="font-semibold text-slate-950">{endDate.toLocaleString()}</p>
+                    <p className="break-words font-semibold text-slate-950">{endDate.toLocaleString()}</p>
                   </div>
                 </div>
               </section>
@@ -137,15 +137,15 @@ export default function StudentExamDetails() {
               </section>
             </div>
 
-            <aside className="rounded-xl bg-[#f8fbff] p-4 sm:rounded-2xl sm:p-5 lg:sticky lg:top-6 lg:self-start">
+            <aside className="min-w-0 rounded-xl bg-[#f8fbff] p-4 sm:rounded-2xl sm:p-5 lg:sticky lg:top-6 lg:self-start">
               <h3 className="text-lg font-semibold text-slate-950">Exam Summary</h3>
               <div className="mt-5 space-y-3 text-sm">
-                <div className="flex items-center justify-between rounded-xl bg-white p-3"><span className="flex items-center gap-2 text-slate-500"><Clock3 size={16} /> Duration</span><strong>{totalDuration} min</strong></div>
-                {extraTimeMinutes > 0 && <div className="flex items-center justify-between rounded-xl bg-white p-3"><span className="flex items-center gap-2 text-slate-500"><Clock3 size={16} /> Extra Time</span><strong className="text-amber-600">+{extraTimeMinutes} min</strong></div>}
-                <div className="flex items-center justify-between rounded-xl bg-white p-3"><span className="flex items-center gap-2 text-slate-500"><Scale size={16} /> Weight</span><strong>{exam.totalMarks} marks</strong></div>
-                <div className="flex items-center justify-between rounded-xl bg-white p-3"><span className="flex items-center gap-2 text-slate-500"><ShieldCheck size={16} /> Pass</span><strong>{exam.passPercentage}%</strong></div>
-                <div className="rounded-xl bg-white p-3"><span className="flex items-center gap-2 text-slate-500"><CalendarDays size={16} /> Starts</span><strong className="mt-1 block">{startDate.toLocaleString()}</strong></div>
-                <div className="rounded-xl bg-white p-3"><span className="flex items-center gap-2 text-slate-500"><FileText size={16} /> Ends</span><strong className="mt-1 block">{endDate.toLocaleString()}</strong></div>
+                <div className="flex items-center justify-between gap-3 rounded-xl bg-white p-3"><span className="flex items-center gap-2 text-slate-500"><Clock3 size={16} /> Duration</span><strong>{totalDuration} min</strong></div>
+                {extraTimeMinutes > 0 && <div className="flex items-center justify-between gap-3 rounded-xl bg-white p-3"><span className="flex items-center gap-2 text-slate-500"><Clock3 size={16} /> Extra Time</span><strong className="text-amber-600">+{extraTimeMinutes} min</strong></div>}
+                <div className="flex items-center justify-between gap-3 rounded-xl bg-white p-3"><span className="flex items-center gap-2 text-slate-500"><Scale size={16} /> Weight</span><strong>{exam.totalMarks} marks</strong></div>
+                <div className="flex items-center justify-between gap-3 rounded-xl bg-white p-3"><span className="flex items-center gap-2 text-slate-500"><ShieldCheck size={16} /> Pass</span><strong>{exam.passPercentage}%</strong></div>
+                <div className="rounded-xl bg-white p-3"><span className="flex items-center gap-2 text-slate-500"><CalendarDays size={16} /> Starts</span><strong className="mt-1 block break-words">{startDate.toLocaleString()}</strong></div>
+                <div className="rounded-xl bg-white p-3"><span className="flex items-center gap-2 text-slate-500"><FileText size={16} /> Ends</span><strong className="mt-1 block break-words">{endDate.toLocaleString()}</strong></div>
               </div>
               {error && <div className="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</div>}
               <button className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#1e9bf0] px-5 py-4 text-base font-semibold text-white transition hover:bg-[#0f88d2] disabled:cursor-not-allowed disabled:bg-slate-300" onClick={startExam} disabled={loading || !isExamOpen}>
@@ -158,4 +158,5 @@ export default function StudentExamDetails() {
     </main>
   );
 }
+
 

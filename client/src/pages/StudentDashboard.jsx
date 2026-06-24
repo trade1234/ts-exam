@@ -66,17 +66,17 @@ export default function StudentDashboard() {
 
   return (
     <div className="min-w-0 space-y-6 sm:space-y-10">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div className="flex min-w-0 items-start gap-3 sm:items-center sm:gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white p-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+      <div className="rounded-xl bg-white p-3 shadow-[0_10px_28px_rgba(30,41,59,0.06)] dark:bg-[#111a2b] sm:flex sm:items-center sm:justify-between sm:gap-4 sm:p-0 sm:shadow-none sm:dark:bg-transparent">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+          <div className="flex h-12 w-12 shrink-0 sm:h-14 sm:w-14 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white p-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-950">
             <img className="h-full w-full object-contain" src={logoUrl} alt="Trade Ethiopia logo" />
           </div>
           <div>
             <h1 className="break-words text-2xl font-semibold tracking-tight sm:text-3xl text-slate-950 dark:text-slate-100">Exams</h1>
-            <p className="mt-2 break-words text-sm leading-6 text-slate-500 sm:text-base dark:text-slate-400">Full name: {data?.profile?.name || "Student"}. Training taken: {data?.profile?.trainingTaken || "Not assigned"}.</p>
+            <p className="mt-1 line-clamp-2 break-words text-sm leading-5 text-slate-500 sm:mt-2 sm:text-base dark:text-slate-400">{data?.profile?.name || "Student"} · {data?.profile?.trainingTaken || "Not assigned"}</p>
           </div>
         </div>
-        <select className="w-full rounded-lg border-0 bg-white px-5 py-4 text-base shadow-[0_18px_45px_rgba(30,41,59,0.07)] outline-none dark:bg-[#111a2b] dark:text-slate-100 sm:w-44">
+        <select className="mt-3 w-full rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 text-sm outline-none dark:border-slate-800 dark:bg-[#0f172a] dark:text-slate-100 sm:mt-0 sm:w-44 sm:border-0 sm:bg-white sm:px-5 sm:py-4 sm:text-base sm:shadow-[0_18px_45px_rgba(30,41,59,0.07)] sm:dark:bg-[#111a2b]">
           <option>All exams</option>
           <option>Upcoming exams</option>
         </select>
@@ -96,7 +96,7 @@ export default function StudentDashboard() {
         <section className="min-w-0 rounded-xl bg-white p-4 sm:p-7 shadow-[0_18px_45px_rgba(30,41,59,0.07)] dark:bg-[#111a2b] dark:shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
           <h2 className="text-lg font-semibold sm:text-xl text-slate-950 dark:text-slate-100">Profile</h2>
           <div className="mt-6 min-w-0 rounded-xl bg-[#edf6ff] p-4 sm:p-5 dark:bg-[#17324d]">
-            <div className="flex min-w-0 items-start gap-3 sm:items-center sm:gap-4">
+            <div className="flex min-w-0 items-center gap-3 sm:gap-4">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#ff9b71] to-[#ec5cff] text-lg font-semibold text-white">
                 {data?.profile?.name?.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase() || "ST"}
               </div>
@@ -134,6 +134,9 @@ export default function StudentDashboard() {
     </div>
   );
 }
+
+
+
 
 
 

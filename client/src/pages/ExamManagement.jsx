@@ -419,26 +419,26 @@ export default function ExamManagement() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row">
+    <div className="min-w-0 space-y-5">
+      <div className="flex min-w-0 flex-col justify-between gap-3 md:flex-row md:items-start">
         <div>
-          <h2 className="text-2xl font-bold">Exam Management</h2>
-          <p className="text-sm text-slate-500">Create exams, set start and end time, then start an exam immediately when needed.</p>
+          <h2 className="break-words text-2xl font-bold">Exam Management</h2>
+          <p className="break-words text-sm text-slate-500">Create exams, set start and end time, then start an exam immediately when needed.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
           <button className="btn-secondary" onClick={() => setModal("extraTime")}><Clock3 size={16} /> Extra Time</button>
           <button className="btn-secondary" onClick={openAddQuestion}><Plus size={16} /> Add Question</button>
           <button className="btn-primary" onClick={openCreateExam}><Plus size={16} /> Create Exam</button>
         </div>
       </div>
 
-      <section className="grid gap-4 rounded-xl border border-blue-100 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-[#111a2b] lg:grid-cols-[minmax(0,1fr)_360px_auto_auto] lg:items-end">
+      <section className="grid min-w-0 gap-4 rounded-xl border border-blue-100 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-[#111a2b] xl:grid-cols-[minmax(0,1fr)_340px_auto_auto] lg:items-end">
         <div>
           <div className="flex items-center gap-2 text-sm font-semibold text-[#287fae] dark:text-sky-300">
             <PlayCircle size={18} /> Start Exam
           </div>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Select an exam and make it live immediately. The countdown updates every second for the selected exam.</p>
-          <select className="input mt-4 max-w-xl" value={selectedStartExamId} onChange={(event) => setSelectedStartExamId(event.target.value)} disabled={!exams.length}>
+          <select className="input mt-4 w-full max-w-xl" value={selectedStartExamId} onChange={(event) => setSelectedStartExamId(event.target.value)} disabled={!exams.length}>
             {!exams.length && <option value="">No exams created</option>}
             {exams.map((exam) => (
               <option key={exam._id} value={exam._id}>{exam.title} - {exam.courseId?.courseCode || exam.courseId?.courseName || "Course"}</option>
@@ -446,7 +446,7 @@ export default function ExamManagement() {
           </select>
         </div>
 
-        <div className={`overflow-hidden rounded-2xl border p-4 transition ${isLiveClock ? "border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-sky-50 shadow-[0_18px_45px_rgba(16,185,129,0.18)]" : isPausedClock ? "border-orange-200 bg-gradient-to-br from-orange-50 via-white to-amber-50 shadow-[0_18px_45px_rgba(249,115,22,0.16)]" : "border-slate-100 bg-slate-50 dark:border-slate-700 dark:bg-[#17223a]"}`}>
+        <div className={`min-w-0 overflow-hidden rounded-2xl border p-4 transition ${isLiveClock ? "border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-sky-50 shadow-[0_18px_45px_rgba(16,185,129,0.18)]" : isPausedClock ? "border-orange-200 bg-gradient-to-br from-orange-50 via-white to-amber-50 shadow-[0_18px_45px_rgba(249,115,22,0.16)]" : "border-slate-100 bg-slate-50 dark:border-slate-700 dark:bg-[#17223a]"}`}>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className={`relative flex h-3 w-3 ${isLiveClock ? "animate-pulse" : ""}`}>
@@ -459,7 +459,7 @@ export default function ExamManagement() {
             <Clock3 className={isLiveClock ? "animate-spin text-emerald-600 [animation-duration:3s]" : isPausedClock ? "text-orange-600" : "text-slate-400"} size={20} />
           </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-2">
+          <div className="mt-4 grid grid-cols-3 gap-2 min-[420px]:gap-3">
             {timeParts(selectedClock.remaining).map((part) => <ClockSegment key={part.label} {...part} active={isLiveClock} />)}
           </div>
 
@@ -469,10 +469,10 @@ export default function ExamManagement() {
           <p className="mt-2 truncate text-xs font-medium text-slate-500 dark:text-slate-400">{selectedStartExam ? selectedStartExam.title : "Create an exam to show the clock."}</p>
         </div>
 
-        <button className="btn-primary min-h-11 px-6" type="button" onClick={startSelectedExam} disabled={!selectedStartExam || savingId === selectedStartExam?._id}>
+        <button className="btn-primary min-h-11 w-full px-6 sm:w-auto" type="button" onClick={startSelectedExam} disabled={!selectedStartExam || savingId === selectedStartExam?._id}>
           <PlayCircle size={18} /> {savingId === selectedStartExam?._id ? "Starting..." : "Start Exam"}
         </button>
-        <button className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-6 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${selectedStartExam?.isPaused ? "bg-emerald-600 text-white hover:bg-emerald-700" : "bg-orange-500 text-white hover:bg-orange-600"}`} type="button" onClick={toggleSelectedPause} disabled={!selectedStartExam || savingId === selectedStartExam?._id}>
+        <button className={`inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg px-6 sm:w-auto py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${selectedStartExam?.isPaused ? "bg-emerald-600 text-white hover:bg-emerald-700" : "bg-orange-500 text-white hover:bg-orange-600"}`} type="button" onClick={toggleSelectedPause} disabled={!selectedStartExam || savingId === selectedStartExam?._id}>
           {selectedStartExam?.isPaused ? <PlayCircle size={18} /> : <PauseCircle size={18} />}
           {selectedStartExam?.isPaused ? "Resume Exam" : "Pause Exam"}
         </button>
@@ -498,7 +498,7 @@ export default function ExamManagement() {
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
           <div>
             <h3 className="text-xl font-bold">Exam Questions</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Select an exam, then edit question text, options, answer key, type, or marks.</p>
+            <p className="break-words text-sm text-slate-500 dark:text-slate-400">Select an exam, then edit question text, options, answer key, type, or marks.</p>
           </div>
           <div className="flex flex-col gap-2 sm:min-w-80 sm:flex-row">
             <select className="input" value={selectedQuestionExamId} onChange={(event) => setSelectedQuestionExamId(event.target.value)} disabled={!exams.length}>
@@ -648,7 +648,7 @@ export default function ExamManagement() {
             </div>
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
               <button className="btn-secondary" type="button" onClick={() => setModal(null)}>Cancel</button>
-              <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="grid gap-3 sm:flex sm:flex-row">
                 <button className="btn-secondary" type="button" onClick={submitPendingQuestions} disabled={!pendingQuestions.length || savingId === "questions"}>{savingId === "questions" ? "Submitting..." : "Submit All Questions"}</button>
                 <button className="btn-primary" type="submit"><Plus size={16} /> Start Adding</button>
               </div>
@@ -764,6 +764,8 @@ export default function ExamManagement() {
     </div>
   );
 }
+
+
 
 
 
