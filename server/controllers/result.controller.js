@@ -147,6 +147,51 @@ export async function analytics(req, res, next) {
   }
 }
 
+export async function reviewResult(req, res, next) {
+  try {
+    await finalizeExpiredAttempts();
+
+    const query = { _id: req.params.attemptId, status: { $ne: "IN_PROGRESS" } };
+    if (req.user.role === "STUDENT") query.studentId = req.user._id;
+
+    const attempt = await ExamAttempt.findOne(query)
+      .populate("studentId", "name email enrollmentNumber")
+      .populate({ path: "examId", populate: { path: "courseId" } });
+    if (!attempt) return res.status(404).json({ message: "Completed result not found" });
+
+    const [questions, answers] = await Promise.all([
+      Question.find({ examId: attempt.examId._id }).sort({ createdAt: 1 }),
+      Answer.find({ attemptId: attempt._id })
+    ]);
+    const answerMap = new Map(answers.map((answer) => [String(answer.questionId), answer.selectedAnswer || ""]));
+    const totalMarks = questions.reduce((total, question) => total + question.marks, 0) || attempt.examId.totalMarks;
+    const items = questions.map((question, index) => {
+      const selectedAnswer = answerMap.get(String(question._id)) || "";
+      const correct = isCorrectAnswer(question, selectedAnswer);
+      return {
+        questionId: question._id,
+        number: index + 1,
+        questionType: question.questionType,
+        questionText: question.questionText,
+        options: {
+          A: question.optionA,
+          B: question.optionB,
+          C: question.optionC,
+          D: question.optionD
+        },
+        selectedAnswer,
+        correctAnswer: question.correctAnswer,
+        isCorrect: correct,
+        marks: question.marks,
+        earnedMarks: correct ? question.marks : 0
+      };
+    });
+
+    res.json({ attempt, totalMarks, items });
+  } catch (error) {
+    next(error);
+  }
+}
 export async function exportPdf(req, res, next) {
   try {
     await finalizeExpiredAttempts();
@@ -205,4 +250,5 @@ async function resultRows() {
     status: result.status
   }));
 }
+
 

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Download, Filter } from "lucide-react";
+import { CheckCircle2, Download, Eye, Filter, XCircle } from "lucide-react";
 import DataTable from "../components/DataTable.jsx";
+import Modal from "../components/Modal.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { api, downloadFile } from "../services/api.js";
 
@@ -21,6 +22,12 @@ function buildResultQuery(filters) {
   return query ? `?${query}` : "";
 }
 
+function answerLabel(questionType, value, options = {}) {
+  if (!value) return "No answer";
+  if (questionType === "MULTIPLE_CHOICE") return `${value}. ${options[value] || ""}`.trim();
+  if (questionType === "TRUE_FALSE") return value === "TRUE" ? "True" : "False";
+  return value;
+}
 export default function Results() {
   const { isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState("completed");
@@ -28,6 +35,9 @@ export default function Results() {
   const [activeRows, setActiveRows] = useState([]);
   const [courses, setCourses] = useState([]);
   const [filters, setFilters] = useState({ courseId: "", date: "" });
+  const [review, setReview] = useState(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState("");
   const query = useMemo(() => buildResultQuery(filters), [filters]);
 
   useEffect(() => {
@@ -47,6 +57,26 @@ export default function Results() {
 
   function resetFilters() {
     setFilters({ courseId: "", date: "" });
+  }
+  async function openReview(row) {
+    setReviewError("");
+    setReviewLoading(true);
+    try {
+      let data;
+      try {
+        const response = await api.get(`/results/review/${row._id}`);
+        data = response.data;
+      } catch (firstError) {
+        if (firstError.response?.status !== 404) throw firstError;
+        const response = await api.get(`/results/${row._id}/review`);
+        data = response.data;
+      }
+      setReview(data);
+    } catch (error) {
+      setReviewError(error.response?.data?.message || "Could not load answer sheet.");
+    } finally {
+      setReviewLoading(false);
+    }
   }
 
   return (
@@ -109,7 +139,12 @@ export default function Results() {
           { key: "submittedAt", label: "Submitted / Finished", render: (row) => formatDateTime(row.submittedAt) },
           { key: "score", label: "Score" },
           { key: "percentage", label: "Percentage", render: (row) => `${row.percentage}%` },
-          { key: "status", label: "Status", render: (row) => <span className={`rounded-full px-3 py-1 text-xs font-bold ${row.status === "PASS" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300" : "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300"}`}>{row.status}</span> }
+          { key: "status", label: "Status", render: (row) => <span className={`rounded-full px-3 py-1 text-xs font-bold ${row.status === "PASS" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300" : "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300"}`}>{row.status}</span> },
+          { key: "review", label: "Answer Sheet", render: (row) => (
+            <button className="btn-secondary" type="button" onClick={() => openReview(row)}>
+              <Eye size={15} /> View Answers
+            </button>
+          ) }
         ]} rows={completedRows} />
       ) : (
         <DataTable columns={[
@@ -126,7 +161,60 @@ export default function Results() {
           { key: "extraTime", label: "Exam Extra Time", render: (row) => row.examId?.extraTimeMinutes ? <span className="font-semibold text-amber-600 dark:text-amber-400">+{row.examId.extraTimeMinutes} min</span> : "None" }
         ]} rows={activeRows} empty="No students are currently taking any exams." />
       )}
-    </div>
+
+      {(review || reviewLoading || reviewError) && (
+        <Modal title="Answer Sheet" onClose={() => { setReview(null); setReviewError(""); }}>
+          {reviewLoading && <p className="rounded-lg bg-slate-50 p-4 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">Loading answer sheet...</p>}
+          {reviewError && <p className="rounded-lg bg-red-50 p-4 text-sm font-semibold text-red-700 dark:bg-red-950/30 dark:text-red-200">{reviewError}</p>}
+          {review && (
+            <div className="space-y-5">
+              <div className="grid gap-3 rounded-xl bg-[#edf6ff] p-4 text-sm dark:bg-[#17324d] sm:grid-cols-2">
+                <div>
+                  <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Student</p>
+                  <p className="mt-1 font-semibold text-slate-950 dark:text-slate-100">{review.attempt.studentId?.name}</p>
+                  <p className="font-mono text-xs text-slate-500 dark:text-slate-400">{review.attempt.studentId?.enrollmentNumber}</p>
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Score</p>
+                  <p className="mt-1 font-semibold text-slate-950 dark:text-slate-100">{review.attempt.score}/{review.totalMarks} ({review.attempt.percentage}%)</p>
+                  <p className="text-xs font-bold text-[#0f88d2]">{review.attempt.status}</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {review.items.map((item) => (
+                  <article key={item.questionId} className={`rounded-xl border p-4 ${item.isCorrect ? "border-emerald-100 bg-emerald-50/60 dark:border-emerald-900/40 dark:bg-emerald-950/20" : "border-red-100 bg-red-50/60 dark:border-red-900/40 dark:bg-red-950/20"}`}>
+                    <div className="flex items-start gap-3">
+                      {item.isCorrect ? <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" size={20} /> : <XCircle className="mt-0.5 shrink-0 text-red-600" size={20} />}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="font-semibold text-slate-950 dark:text-slate-100">{item.number}. {item.questionText}</p>
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${item.isCorrect ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300" : "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300"}`}>
+                            {item.earnedMarks}/{item.marks} marks
+                          </span>
+                        </div>
+                        <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                          <p className="rounded-lg bg-white/80 p-3 text-slate-700 dark:bg-[#111a2b] dark:text-slate-200">
+                            <span className="block text-xs font-bold uppercase text-slate-400">Your answer</span>
+                            {answerLabel(item.questionType, item.selectedAnswer, item.options)}
+                          </p>
+                          <p className="rounded-lg bg-white/80 p-3 text-slate-700 dark:bg-[#111a2b] dark:text-slate-200">
+                            <span className="block text-xs font-bold uppercase text-slate-400">Correct answer</span>
+                            {answerLabel(item.questionType, item.correctAnswer, item.options)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+        </Modal>
+      )}    </div>
   );
 }
+
+
+
 
