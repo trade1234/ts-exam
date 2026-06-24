@@ -319,14 +319,14 @@ export default function Layout({ role }) {
                 </div>
               </header>
 
-              <section className="px-4 pb-24 pt-6 sm:px-6 lg:px-10 xl:px-16 lg:py-12 xl:py-16">
+              <section className="min-w-0 px-3 pb-24 pt-5 sm:px-6 lg:px-10 xl:px-16 lg:py-12 xl:py-16">
                 <Outlet />
               </section>
 
               <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 px-2 py-2 shadow-[0_-12px_30px_rgba(15,23,42,0.14)] backdrop-blur dark:border-slate-800 dark:bg-[#111a2b]/95 xl:hidden">
-                <div className="mx-auto grid max-w-2xl gap-1" style={{ gridTemplateColumns: `repeat(${links.length}, minmax(0, 1fr))` }}>
+                <div className="mx-auto flex max-w-2xl gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid" style={{ gridTemplateColumns: `repeat(${links.length}, minmax(0, 1fr))` }}>
                   {links.map(({ to, label, icon: Icon }) => (
-                    <NavLink key={to} end to={to} className={({ isActive }) => `flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[11px] font-bold transition ${isActive ? "bg-[#0f88d2] text-white dark:bg-[#1e9bf0]" : "text-slate-500 hover:bg-blue-50 hover:text-[#0f88d2] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-[#7dd3fc]"}` }>
+                    <NavLink key={to} end to={to} className={({ isActive }) => `flex min-h-14 min-w-[72px] flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[10px] font-bold transition sm:min-w-0 sm:text-[11px] ${isActive ? "bg-[#0f88d2] text-white dark:bg-[#1e9bf0]" : "text-slate-500 hover:bg-blue-50 hover:text-[#0f88d2] dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-[#7dd3fc]"}` }>
                       <Icon size={19} />
                       <span className="max-w-full truncate">{label}</span>
                     </NavLink>
@@ -340,6 +340,7 @@ export default function Layout({ role }) {
     </div>
   );
 }
+
 
 
 
