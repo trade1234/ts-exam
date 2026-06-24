@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { Navigate, useNavigate } from "react-router-dom";
 import { ArrowLeft, Eye, Lock, Monitor, UserRound } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
-import { api } from "../services/api.js";
+import { apiBaseURL } from "../services/api.js";
 import logoUrl from "../logo/download.png";
 
 export default function Login() {
@@ -31,7 +31,7 @@ export default function Login() {
       if (err.response?.data?.message) {
         setError(err.response.data.message);
       } else if (err.request) {
-        setError("Cannot reach the backend API. Make sure the server is running on http://localhost:5000.");
+        setError(`Cannot reach the backend API. Check Render frontend VITE_API_URL. Current API URL: ${apiBaseURL || "not configured"}`);
       } else {
         setError(err.message || "Login failed");
       }
@@ -111,6 +111,7 @@ export default function Login() {
     </main>
   );
 }
+
 
 
 

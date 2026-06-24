@@ -1,7 +1,12 @@
 import axios from "axios";
 
+const configuredApiUrl = import.meta.env.VITE_API_URL;
+const isLocalApiUrl = configuredApiUrl && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(configuredApiUrl);
+
+export const apiBaseURL = import.meta.env.PROD && isLocalApiUrl ? "" : configuredApiUrl || "/api";
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "/api"
+  baseURL: apiBaseURL
 });
 
 api.interceptors.request.use((config) => {
@@ -35,6 +40,3 @@ export function downloadFile(path, filename) {
     URL.revokeObjectURL(url);
   });
 }
-
-
-
