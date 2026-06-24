@@ -36,7 +36,7 @@ export default function Home() {
             </div>
             <div>
               <p className="max-w-[13rem] text-sm font-semibold leading-tight tracking-wide sm:max-w-none sm:text-base">Trade Ethiopia School of Business and Innovation</p>
-              <p className="text-xs text-slate-500">Online Examination System</p>
+              <p className="text-xs text-slate-500">TESBINN FINAL EXAMINATION</p>
             </div>
           </div>
           <button type="button" className="inline-flex shrink-0 items-center gap-2 rounded-md bg-[#0f7ead] px-4 py-2.5 text-sm font-semibold text-white sm:px-5 shadow-sm transition hover:bg-[#096f9b]" onClick={handleStartExam}>
@@ -55,7 +55,7 @@ export default function Home() {
         </h1>
 
         <p className="mt-5 max-w-3xl text-base leading-7 sm:text-lg sm:leading-8 text-slate-600">
-          Your gateway to seamless online assessments. Access exam schedules, take examinations, view results, and track your academic progress-all in one place.
+          Welcome to TESBINN FINAL EXAMINATION. Sign in to access your scheduled exams, submit answers, and view your results.
         </p>
 
         <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">
@@ -72,6 +72,8 @@ export default function Home() {
     </main>
   );
 }
+
+
 
 
 

@@ -9,12 +9,15 @@ export default function Brand({ compact = false }) {
       {!compact && (
         <div>
           <p className="text-base font-bold text-ink">Trade Ethiopia SBI</p>
-          <p className="text-xs text-slate-500">Online Examination System</p>
+          <p className="text-xs text-slate-500">TESBINN FINAL EXAMINATION</p>
         </div>
       )}
     </div>
   );
 }
+
+
+
 
 
 
