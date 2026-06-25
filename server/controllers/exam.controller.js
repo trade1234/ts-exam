@@ -109,7 +109,7 @@ export async function startExam(req, res, next) {
       }
     }
 
-    const questions = await Question.find({ examId: exam._id }).select("-correctAnswer").sort({ createdAt: 1 });
+    const questions = await Question.find({ examId: exam._id }).select("-correctAnswer").sort({ order: 1, createdAt: 1 });
     const answers = await Answer.find({ attemptId: attempt._id });
     
     await logActivity(req, "START_EXAM", `Started exam: "${exam.title}" for course "${exam.courseId?.courseName}"`);
@@ -154,7 +154,7 @@ export async function submitExam(req, res, next) {
     }
 
     const exam = await Exam.findById(attempt.examId);
-    const questions = await Question.find({ examId: attempt.examId });
+    const questions = await Question.find({ examId: attempt.examId }).sort({ order: 1, createdAt: 1 });
     const answers = await Answer.find({ attemptId: attempt._id });
     const answerMap = new Map(answers.map((answer) => [String(answer.questionId), answer.selectedAnswer]));
     const score = questions.reduce((total, question) => {

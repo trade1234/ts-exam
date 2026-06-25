@@ -10,10 +10,13 @@ const questionSchema = new mongoose.Schema(
     optionC: { type: String, default: "" },
     optionD: { type: String, default: "" },
     correctAnswer: { type: String, required: true, trim: true },
-    marks: { type: Number, default: 1, min: 0.1 }
+    marks: { type: Number, default: 1, min: 0.1 },
+    order: { type: Number, default: 0, min: 0 }
   },
   { timestamps: true }
 );
+
+questionSchema.index({ examId: 1, order: 1, createdAt: 1 });
 
 questionSchema.pre("validate", function validateQuestion(next) {
   if (this.questionType === "MULTIPLE_CHOICE") {

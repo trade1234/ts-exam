@@ -11,7 +11,8 @@ export const questionSchema = z.object({
     optionC: z.string().optional().default(""),
     optionD: z.string().optional().default(""),
     correctAnswer: z.string().min(1),
-    marks: z.coerce.number().min(0.1).default(1)
+    marks: z.coerce.number().min(0.1).default(1),
+    order: z.coerce.number().min(0).optional()
   }).superRefine((question, ctx) => {
     if (question.questionType === "MULTIPLE_CHOICE") {
       ["optionA", "optionB", "optionC", "optionD"].forEach((field) => {
@@ -33,7 +34,7 @@ export async function listQuestions(req, res, next) {
   try {
     const query = req.query.examId ? { examId: req.query.examId } : {};
     const projection = req.user.role === "ADMIN" ? "" : "-correctAnswer";
-    res.json(await Question.find(query).select(projection).sort({ createdAt: 1 }));
+    res.json(await Question.find(query).select(projection).sort({ order: 1, createdAt: 1 }));
   } catch (error) {
     next(error);
   }
@@ -41,7 +42,12 @@ export async function listQuestions(req, res, next) {
 
 export async function createQuestion(req, res, next) {
   try {
-    res.status(201).json(await Question.create(req.body));
+    const body = { ...req.body };
+    if (body.order === undefined) {
+      const lastQuestion = await Question.findOne({ examId: body.examId }).sort({ order: -1, createdAt: -1 });
+      body.order = (lastQuestion?.order || 0) + 1;
+    }
+    res.status(201).json(await Question.create(body));
   } catch (error) {
     next(error);
   }
@@ -49,7 +55,24 @@ export async function createQuestion(req, res, next) {
 
 export async function bulkCreateQuestions(req, res, next) {
   try {
-    const questions = await Question.insertMany(req.body.questions);
+    const counters = new Map();
+    const questionsWithOrder = [];
+    for (const question of req.body.questions) {
+      if (question.order !== undefined) {
+        questionsWithOrder.push(question);
+        continue;
+      }
+
+      const examId = String(question.examId);
+      if (!counters.has(examId)) {
+        const lastQuestion = await Question.findOne({ examId }).sort({ order: -1, createdAt: -1 });
+        counters.set(examId, lastQuestion?.order || 0);
+      }
+      const nextOrder = counters.get(examId) + 1;
+      counters.set(examId, nextOrder);
+      questionsWithOrder.push({ ...question, order: nextOrder });
+    }
+    const questions = await Question.insertMany(questionsWithOrder);
     res.status(201).json(questions);
   } catch (error) {
     next(error);

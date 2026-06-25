@@ -5,9 +5,26 @@ import Modal from "../components/Modal.jsx";
 import { api } from "../services/api.js";
 
 const blankExam = { courseId: "", title: "", description: "", durationMinutes: 30, extraTimeMinutes: 0, totalMarks: 10, passPercentage: 50, startDate: "", endDate: "" };
-const blankQuestion = { examId: "", questionType: "MULTIPLE_CHOICE", questionText: "", optionA: "", optionB: "", optionC: "", optionD: "", correctAnswer: "A", marks: 1 };
+const blankQuestion = { examId: "", questionType: "MULTIPLE_CHOICE", questionText: "", optionA: "", optionB: "", optionC: "", optionD: "", correctAnswer: "A", marks: 1, order: 0 };
 const blankExtraTime = { examId: "", minutes: 5 };
 const blankQuestionBatch = { examId: "", questionType: "MULTIPLE_CHOICE", count: 1, marks: 1 };
+const questionDraftStorageKey = "exam_question_draft";
+
+function readQuestionDraft() {
+  try {
+    return JSON.parse(localStorage.getItem(questionDraftStorageKey) || "null");
+  } catch {
+    return null;
+  }
+}
+
+function hasQuestionDraft(draft) {
+  return Boolean(draft?.questionBatch?.examId || draft?.pendingQuestions?.length || draft?.questionForm?.questionText);
+}
+
+function formatDraftSavedAt(value) {
+  return value ? new Date(value).toLocaleString() : "not saved yet";
+}
 
 function toLocalDateTimeInput(date) {
   const pad = (value) => String(value).padStart(2, "0");
@@ -37,8 +54,10 @@ function answerKeyForType(questionType) {
 }
 
 function toQuestionPayload(form) {
-  if (form.questionType === "MULTIPLE_CHOICE") return form;
-  return { ...form, optionA: "", optionB: "", optionC: "", optionD: "" };
+  const payload = { ...form };
+  if (payload.order === "" || payload.order === 0 || payload.order === "0") delete payload.order;
+  if (payload.questionType === "MULTIPLE_CHOICE") return payload;
+  return { ...payload, optionA: "", optionB: "", optionC: "", optionD: "" };
 }
 
 function examStatus(exam, now = Date.now()) {
@@ -152,6 +171,7 @@ export default function ExamManagement() {
   const [pendingQuestions, setPendingQuestions] = useState([]);
   const [questionStep, setQuestionStep] = useState(1);
   const [questionMessage, setQuestionMessage] = useState("");
+  const [questionDraftSavedAt, setQuestionDraftSavedAt] = useState("");
   const [formError, setFormError] = useState("");
   const [modal, setModal] = useState(null);
   const [savingId, setSavingId] = useState("");
@@ -175,6 +195,13 @@ export default function ExamManagement() {
   useEffect(load, []);
 
   useEffect(() => {
+    if (!["questionSetup", "questionBatch"].includes(modal)) return;
+    const draft = { pendingQuestions, questionBatch, questionForm, questionStep, savedAt: new Date().toISOString() };
+    localStorage.setItem(questionDraftStorageKey, JSON.stringify(draft));
+    setQuestionDraftSavedAt(draft.savedAt);
+  }, [modal, pendingQuestions, questionBatch, questionForm, questionStep]);
+
+  useEffect(() => {
     const interval = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(interval);
   }, []);
@@ -196,6 +223,8 @@ export default function ExamManagement() {
       const { data: createdExam } = await api.post("/exams", examForm);
       setExamForm(blankExam);
       if (action === "addQuestions") {
+        localStorage.removeItem(questionDraftStorageKey);
+        setQuestionDraftSavedAt("");
         setPendingQuestions([]);
         setQuestionStep(1);
         setQuestionMessage("Exam saved. Choose the first question type and number of questions.");
@@ -249,11 +278,34 @@ export default function ExamManagement() {
   function openAddQuestion() {
     const examId = selectedQuestionExamId || exams[0]?._id || "";
     setFormError("");
-    setQuestionMessage("");
+    const savedDraft = readQuestionDraft();
+    if (hasQuestionDraft(savedDraft)) {
+      setQuestionMessage(`Restored autosaved question draft from ${formatDraftSavedAt(savedDraft.savedAt)}.`);
+      setQuestionDraftSavedAt(savedDraft.savedAt || "");
+      setPendingQuestions(savedDraft.pendingQuestions || []);
+      setQuestionStep(savedDraft.questionStep || 1);
+      setQuestionBatch(savedDraft.questionBatch || { ...blankQuestionBatch, examId });
+      setQuestionForm(savedDraft.questionForm || blankQuestion);
+    } else {
+      setQuestionMessage("");
+      setQuestionDraftSavedAt("");
+      setPendingQuestions([]);
+      setQuestionStep(1);
+      setQuestionBatch({ ...blankQuestionBatch, examId });
+      setQuestionForm(blankQuestion);
+    }
+    setModal("questionSetup");
+  }
+
+  function discardQuestionDraft() {
+    const examId = selectedQuestionExamId || exams[0]?._id || "";
+    localStorage.removeItem(questionDraftStorageKey);
     setPendingQuestions([]);
     setQuestionStep(1);
     setQuestionBatch({ ...blankQuestionBatch, examId });
-    setModal("questionSetup");
+    setQuestionForm(blankQuestion);
+    setQuestionDraftSavedAt("");
+    setQuestionMessage("Autosaved question draft discarded.");
   }
 
   function startQuestionBatch(e) {
@@ -302,6 +354,8 @@ export default function ExamManagement() {
     setSavingId("questions");
     try {
       await api.post("/questions/bulk", { questions: pendingQuestions });
+      localStorage.removeItem(questionDraftStorageKey);
+      setQuestionDraftSavedAt("");
       setSelectedQuestionExamId(questionBatch.examId);
       setPendingQuestions([]);
       setQuestionMessage("");
@@ -511,6 +565,7 @@ export default function ExamManagement() {
 
         <DataTable columns={[
           { key: "questionText", label: "Question", render: (row) => <span className="line-clamp-2 font-semibold">{row.questionText}</span> },
+          { key: "order", label: "Order", render: (row) => row.order || "-" },
           { key: "questionType", label: "Type", render: (row) => row.questionType === "TRUE_FALSE" ? "True / false" : row.questionType === "SHORT_ANSWER" ? "Short answer" : "Multiple choice" },
           { key: "correctAnswer", label: "Answer", render: (row) => <span className="font-mono text-xs font-bold">{row.correctAnswer}</span> },
           { key: "marks", label: "Marks" },
@@ -617,6 +672,10 @@ export default function ExamManagement() {
           <form className="grid gap-4" onSubmit={startQuestionBatch}>
             {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 dark:bg-red-950/30 dark:text-red-200">{formError}</p>}
             {questionMessage && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-200">{questionMessage}</p>}
+            <div className="flex flex-col gap-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:border-slate-700 dark:bg-slate-800 dark:text-sky-200 sm:flex-row sm:items-center sm:justify-between">
+              <span className="font-semibold">Question draft autosaved locally: {formatDraftSavedAt(questionDraftSavedAt)}</span>
+              {(questionDraftSavedAt || pendingQuestions.length > 0 || questionForm.questionText) && <button className="text-left text-sm font-bold text-red-600 hover:text-red-700 dark:text-red-300" type="button" onClick={discardQuestionDraft}>Discard autosaved draft</button>}
+            </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="space-y-1 text-sm font-semibold text-slate-600 dark:text-slate-300 sm:col-span-2">
                 <span>Exam</span>
@@ -661,9 +720,13 @@ export default function ExamManagement() {
           <form className="grid gap-3 sm:grid-cols-2" onSubmit={saveDraftQuestion}>
             {formError && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 dark:bg-red-950/30 dark:text-red-200 sm:col-span-2">{formError}</p>}
             <div className="rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 dark:bg-slate-800 dark:text-sky-200 sm:col-span-2">
-              Draft questions ready: {pendingQuestions.length}
+              Draft questions ready: {pendingQuestions.length}. Autosaved locally: {formatDraftSavedAt(questionDraftSavedAt)}
             </div>
             <textarea className="input sm:col-span-2" placeholder="Question text" value={questionForm.questionText} onChange={(event) => setQuestionForm({ ...questionForm, questionText: event.target.value })} required />
+            <label className="space-y-1 text-sm font-semibold text-slate-600 dark:text-slate-300">
+              <span>Question order</span>
+              <input className="input" type="number" min="0" placeholder="Auto" value={questionForm.order || ""} onChange={(event) => setQuestionForm({ ...questionForm, order: event.target.value })} />
+            </label>
 
             {questionForm.questionType === "MULTIPLE_CHOICE" ? (
               <>
@@ -726,6 +789,10 @@ export default function ExamManagement() {
               <option value="SHORT_ANSWER">Short answer</option>
             </select>
             <textarea className="input sm:col-span-2" placeholder="Question text" value={questionForm.questionText} onChange={(e) => setQuestionForm({ ...questionForm, questionText: e.target.value })} required />
+            <label className="space-y-1 text-sm font-semibold text-slate-600 dark:text-slate-300">
+              <span>Question order</span>
+              <input className="input" type="number" min="0" placeholder="Auto" value={questionForm.order || ""} onChange={(e) => setQuestionForm({ ...questionForm, order: e.target.value })} />
+            </label>
 
             {questionForm.questionType === "MULTIPLE_CHOICE" ? (
               <>
@@ -764,6 +831,10 @@ export default function ExamManagement() {
     </div>
   );
 }
+
+
+
+
 
 
 

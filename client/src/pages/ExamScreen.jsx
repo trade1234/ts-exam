@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
 import Brand from "../components/Brand.jsx";
@@ -12,6 +12,9 @@ export default function ExamScreen() {
   const [index, setIndex] = useState(0);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [saveStatus, setSaveStatus] = useState("saved");
+  const [securityNotice, setSecurityNotice] = useState("");
+  const saveTimeoutRef = useRef(null);
   const [answers, setAnswers] = useState(() => {
     const map = {};
     initial?.answers?.forEach((answer) => { map[answer.questionId] = answer; });
@@ -49,10 +52,95 @@ export default function ExamScreen() {
     if (remaining === 0 && bundle && !isPaused) submit({ skipConfirm: true });
   }, [remaining, isPaused]);
 
-  useEffect(() => {
-    const interval = setInterval(save, 15000);
-    return () => clearInterval(interval);
+  const answerPayload = useCallback(() => {
+    return Object.entries(answers).map(([questionId, answer]) => ({ questionId, ...answer }));
   }, [answers]);
+
+  const save = useCallback(async () => {
+    if (!bundle?.attempt?._id) return;
+    setSaveStatus("saving");
+    try {
+      await api.put(`/exams/attempts/${bundle.attempt._id}/answers`, { answers: answerPayload() });
+      setSaveStatus("saved");
+    } catch (err) {
+      setSaveStatus("error");
+      console.error("Failed to save answers", err);
+    }
+  }, [answerPayload, bundle?.attempt?._id]);
+
+  useEffect(() => {
+    if (!bundle?.attempt?._id) return undefined;
+    setSaveStatus("pending");
+    window.clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = window.setTimeout(save, 1200);
+    return () => window.clearTimeout(saveTimeoutRef.current);
+  }, [answers, bundle?.attempt?._id, save]);
+
+  useEffect(() => {
+    const interval = setInterval(save, 10000);
+    return () => clearInterval(interval);
+  }, [save]);
+
+  useEffect(() => {
+    const flushBeforeUnload = () => {
+      if (!bundle?.attempt?._id) return;
+      const body = JSON.stringify({ answers: answerPayload() });
+      const token = localStorage.getItem("exam_token");
+      localStorage.setItem(`exam_answers_${bundle.attempt._id}`, body);
+      fetch(`${api.defaults.baseURL}/exams/attempts/${bundle.attempt._id}/answers`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body,
+        keepalive: true
+      }).catch(() => {});
+    };
+    window.addEventListener("beforeunload", flushBeforeUnload);
+    return () => window.removeEventListener("beforeunload", flushBeforeUnload);
+  }, [answerPayload, bundle?.attempt?._id]);
+
+  useEffect(() => {
+    const showBlockedNotice = (message) => {
+      setSecurityNotice(message);
+      window.setTimeout(() => setSecurityNotice(""), 2500);
+    };
+    const blockEvent = (event, message) => {
+      event.preventDefault();
+      event.stopPropagation();
+      showBlockedNotice(message);
+      return false;
+    };
+    const handleKeyDown = (event) => {
+      const key = event.key?.toLowerCase();
+      const blockedShortcut = event.ctrlKey || event.metaKey;
+      if (event.key === "PrintScreen" || (blockedShortcut && ["c", "x", "v", "p", "s", "a"].includes(key))) {
+        blockEvent(event, "Copy, paste, print, save, select all, and screenshot shortcuts are disabled during the exam.");
+        if (event.key === "PrintScreen") navigator.clipboard?.writeText("");
+      }
+    };
+    const handleClipboard = (event) => blockEvent(event, "Copy and paste are disabled during the exam.");
+    const handleContextMenu = (event) => blockEvent(event, "Right click is disabled during the exam.");
+    const handleVisibility = () => {
+      if (document.hidden) save();
+    };
+
+    document.addEventListener("keydown", handleKeyDown, true);
+    document.addEventListener("copy", handleClipboard, true);
+    document.addEventListener("cut", handleClipboard, true);
+    document.addEventListener("paste", handleClipboard, true);
+    document.addEventListener("contextmenu", handleContextMenu, true);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, true);
+      document.removeEventListener("copy", handleClipboard, true);
+      document.removeEventListener("cut", handleClipboard, true);
+      document.removeEventListener("paste", handleClipboard, true);
+      document.removeEventListener("contextmenu", handleContextMenu, true);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [save]);
 
   useEffect(() => {
     if (!bundle?.exam?._id) return undefined;
@@ -81,18 +169,6 @@ export default function ExamScreen() {
   }, [bundle?.exam?._id]);
 
   if (!bundle || !question) return null;
-
-  function answerPayload() {
-    return Object.entries(answers).map(([questionId, answer]) => ({ questionId, ...answer }));
-  }
-
-  async function save() {
-    try {
-      await api.put(`/exams/attempts/${bundle.attempt._id}/answers`, { answers: answerPayload() });
-    } catch (err) {
-      console.error("Failed to save answers", err);
-    }
-  }
 
   async function submit({ skipConfirm = false } = {}) {
     if (!skipConfirm) {
@@ -135,7 +211,7 @@ export default function ExamScreen() {
   const seconds = String(remaining % 60).padStart(2, "0");
 
   return (
-    <div className="min-h-screen bg-portal">
+    <div className="min-h-screen select-none bg-portal">
       <header className="border-b border-blue-100 bg-white px-3 py-3 sm:px-4 sm:py-4">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-3 md:flex-row md:items-center">
           <Brand />
@@ -144,6 +220,9 @@ export default function ExamScreen() {
             <p className="break-words text-slate-500">{bundle.exam.title}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            <div className={`rounded-lg px-3 py-1.5 text-xs font-bold ${saveStatus === "error" ? "bg-red-50 text-red-700" : saveStatus === "saved" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+              {saveStatus === "error" ? "Autosave failed" : saveStatus === "saved" ? "Autosaved" : "Saving..."}
+            </div>
             {extraMinutes > 0 && (
               <span className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-white animate-pulse">
                 +{extraMinutes} Min Extra Time
@@ -162,6 +241,11 @@ export default function ExamScreen() {
             <h2 className="mt-5 text-2xl font-bold text-slate-950">Exam paused</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">The administrator has paused this exam. Your timer is stopped and will continue when the exam is resumed.</p>
           </div>
+        </div>
+      )}
+      {securityNotice && (
+        <div className="fixed left-1/2 top-20 z-50 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800 shadow-lg">
+          {securityNotice}
         </div>
       )}
       <main className="mx-auto grid max-w-7xl gap-3 p-3 sm:gap-4 sm:p-4 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]">
