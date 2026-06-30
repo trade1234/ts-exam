@@ -5,7 +5,7 @@ const serviceLinks = [
   {
     title: "Online Exam Portal",
     description: "Sign in to take scheduled exams, answer questions, and view your result after submission.",
-    href: "https://examfrontend-f35t.onrender.com/",
+    href: "#/login",
     icon: GraduationCap,
     tone: "blue",
     action: "Open exam"
@@ -29,7 +29,7 @@ const serviceLinks = [
   {
     title: "Application Form",
     description: "Fill out the online application form and upload the required documents.",
-    href: "http://localhost:5174/#/apply",
+    href: "#/apply",
     icon: FileText,
     tone: "purple",
     action: "Apply now"
@@ -42,6 +42,10 @@ const toneClasses = {
   amber: "bg-amber-50 text-amber-700 ring-amber-100 group-hover:bg-amber-500 group-hover:text-white",
   purple: "bg-purple-50 text-purple-700 ring-purple-100 group-hover:bg-purple-600 group-hover:text-white"
 };
+
+function isExternalLink(href) {
+  return /^https?:\/\//.test(href);
+}
 
 export default function Home() {
   return (
@@ -57,7 +61,7 @@ export default function Home() {
               <p className="truncate text-xs font-semibold text-[#0f88d2]">TESBINN Online Services</p>
             </div>
           </div>
-          <a className="hidden shrink-0 items-center gap-2 rounded-lg bg-[#0f7ead] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#096f9b] sm:inline-flex" href="https://examfrontend-f35t.onrender.com/" target="_blank" rel="noreferrer">
+          <a className="hidden shrink-0 items-center gap-2 rounded-lg bg-[#0f7ead] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#096f9b] sm:inline-flex" href="#/login">
             Exam login <ArrowRight size={16} />
           </a>
         </div>
@@ -96,13 +100,16 @@ export default function Home() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {serviceLinks.map(({ title, description, href, icon: Icon, tone, action }) => (
+          {serviceLinks.map(({ title, description, href, icon: Icon, tone, action }) => {
+            const external = isExternalLink(href);
+
+            return (
             <a
               key={title}
               className="group flex min-h-[220px] flex-col justify-between rounded-2xl border border-blue-100 bg-white p-5 shadow-[0_16px_45px_rgba(30,41,59,0.08)] transition hover:-translate-y-1 hover:border-[#1e9bf0] hover:shadow-[0_26px_70px_rgba(30,155,240,0.16)] focus:outline-none focus:ring-4 focus:ring-blue-100"
               href={href}
-              target="_blank"
-              rel="noreferrer"
+              target={external ? "_blank" : undefined}
+              rel={external ? "noreferrer" : undefined}
             >
               <div>
                 <div className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl ring-4 transition ${toneClasses[tone]}`}>
@@ -115,7 +122,8 @@ export default function Home() {
                 {action} <ArrowRight size={17} />
               </span>
             </a>
-          ))}
+            );
+          })}
         </div>
       </section>
     </main>
