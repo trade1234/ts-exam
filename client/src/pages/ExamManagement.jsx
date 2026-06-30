@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, CalendarClock, Clock3, PauseCircle, Pencil, PlayCircle, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, CalendarClock, Clock3, Eye, PauseCircle, Pencil, PlayCircle, Plus, Search, Trash2 } from "lucide-react";
 import DataTable from "../components/DataTable.jsx";
 import Modal from "../components/Modal.jsx";
 import { api } from "../services/api.js";
@@ -7,6 +7,7 @@ import { api } from "../services/api.js";
 const blankExam = { courseId: "", title: "", description: "", durationMinutes: 30, extraTimeMinutes: 0, totalMarks: 10, passPercentage: 50, startDate: "", endDate: "" };
 const blankQuestion = { examId: "", questionType: "MULTIPLE_CHOICE", questionText: "", optionA: "", optionB: "", optionC: "", optionD: "", correctAnswer: "A", marks: 1, order: 0 };
 const blankExtraTime = { examId: "", minutes: 5 };
+const allQuestionsExamId = "ALL";
 const blankQuestionBatch = { examId: "", questionType: "MULTIPLE_CHOICE", count: 1, marks: 1 };
 const questionDraftStorageKey = "exam_question_draft";
 
@@ -60,6 +61,15 @@ function toQuestionPayload(form) {
   return { ...payload, optionA: "", optionB: "", optionC: "", optionD: "" };
 }
 
+function entityId(value) {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  return String(value._id || value.id || value.$oid || "");
+}
+
+function questionExamId(question) {
+  return entityId(question.examId || question.exam || question.exam_id);
+}
 function examStatus(exam, now = Date.now()) {
   const start = new Date(exam.startDate).getTime();
   const end = new Date(exam.endDate).getTime();
@@ -163,6 +173,7 @@ export default function ExamManagement() {
   const [courses, setCourses] = useState([]);
   const [exams, setExams] = useState([]);
   const [questions, setQuestions] = useState([]);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
   const [examForm, setExamForm] = useState(blankExam);
   const [editingExamId, setEditingExamId] = useState("");
   const [questionForm, setQuestionForm] = useState(blankQuestion);
@@ -177,22 +188,40 @@ export default function ExamManagement() {
   const [savingId, setSavingId] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [questionDeleteTarget, setQuestionDeleteTarget] = useState(null);
-  const [selectedQuestionExamId, setSelectedQuestionExamId] = useState("");
+  const [selectedQuestionExamId, setSelectedQuestionExamId] = useState(allQuestionsExamId);
+  const [questionSearch, setQuestionSearch] = useState("");
+  const [questionDetail, setQuestionDetail] = useState(null);
   const [selectedStartExamId, setSelectedStartExamId] = useState("");
   const [now, setNow] = useState(new Date());
 
+  async function loadQuestions(examId = selectedQuestionExamId) {
+    setQuestionsLoading(true);
+    try {
+      const query = examId && examId !== allQuestionsExamId ? `?examId=${encodeURIComponent(examId)}` : "";
+      const { data } = await api.get(`/questions${query}`);
+      const questionList = Array.isArray(data) ? data : data?.questions || [];
+      setQuestions(questionList);
+      return questionList;
+    } finally {
+      setQuestionsLoading(false);
+    }
+  }
   function load() {
-    Promise.all([api.get("/courses"), api.get("/exams"), api.get("/questions")]).then(([c, e, q]) => {
+    Promise.all([api.get("/courses"), api.get("/exams")]).then(([c, e]) => {
       setCourses(c.data);
       setExams(e.data);
-      setQuestions(q.data);
+      loadQuestions(allQuestionsExamId);
       setSelectedStartExamId((current) => current || e.data[0]?._id || "");
-      setSelectedQuestionExamId((current) => current || e.data[0]?._id || "");
+      setSelectedQuestionExamId((current) => current || allQuestionsExamId);
       setExtraTimeForm((current) => ({ ...current, examId: current.examId || e.data[0]?._id || "" }));
     });
   }
 
   useEffect(load, []);
+
+  useEffect(() => {
+    loadQuestions(selectedQuestionExamId);
+  }, [selectedQuestionExamId]);
 
   useEffect(() => {
     if (!["questionSetup", "questionBatch"].includes(modal)) return;
@@ -276,7 +305,7 @@ export default function ExamManagement() {
   }
 
   function openAddQuestion() {
-    const examId = selectedQuestionExamId || exams[0]?._id || "";
+    const examId = selectedQuestionExamId === allQuestionsExamId ? exams[0]?._id || "" : selectedQuestionExamId || exams[0]?._id || "";
     setFormError("");
     const savedDraft = readQuestionDraft();
     if (hasQuestionDraft(savedDraft)) {
@@ -298,7 +327,7 @@ export default function ExamManagement() {
   }
 
   function discardQuestionDraft() {
-    const examId = selectedQuestionExamId || exams[0]?._id || "";
+    const examId = selectedQuestionExamId === allQuestionsExamId ? exams[0]?._id || "" : selectedQuestionExamId || exams[0]?._id || "";
     localStorage.removeItem(questionDraftStorageKey);
     setPendingQuestions([]);
     setQuestionStep(1);
@@ -421,10 +450,46 @@ export default function ExamManagement() {
     }
   }
 
+  const examTitleById = new Map(exams.map((exam) => [exam._id, exam.title]));
+  const selectedQuestionExam = selectedQuestionExamId === allQuestionsExamId ? null : exams.find((exam) => exam._id === selectedQuestionExamId);
+  const examQuestionCards = (selectedQuestionExamId === allQuestionsExamId ? exams : selectedQuestionExam ? [selectedQuestionExam] : []).map((exam) => {
+    const examQuestions = questions
+      .filter((question) => questionExamId(question) === exam._id)
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    const visibleQuestions = examQuestions.filter((question) => {
+      const searchText = questionSearch.trim().toLowerCase();
+      if (!searchText) return true;
+      return [
+        question.questionText,
+        question.correctAnswer,
+        question.optionA,
+        question.optionB,
+        question.optionC,
+        question.optionD,
+        questionTypeLabel(question.questionType),
+        exam.title
+      ].filter(Boolean).join(" ").toLowerCase().includes(searchText);
+    });
+    return {
+      exam,
+      questions: visibleQuestions,
+      total: examQuestions.length,
+      multipleChoice: examQuestions.filter((question) => question.questionType === "MULTIPLE_CHOICE").length,
+      trueFalse: examQuestions.filter((question) => question.questionType === "TRUE_FALSE").length,
+      shortAnswer: examQuestions.filter((question) => question.questionType === "SHORT_ANSWER").length
+    };
+  });
   const selectedStartExam = exams.find((exam) => exam._id === selectedStartExamId);
   const selectedClock = countdownState(selectedStartExam, now);
   const isLiveClock = selectedClock.mode === "live";
   const isPausedClock = selectedClock.mode === "paused";
+
+  async function openQuestionDetails(exam, fallbackQuestions = []) {
+    const latestQuestions = await loadQuestions(exam._id);
+    setSelectedQuestionExamId(exam._id);
+    const detailQuestions = latestQuestions.length ? latestQuestions : fallbackQuestions;
+    setQuestionDetail({ title: exam.title, questions: detailQuestions });
+  }
 
   async function startSelectedExam() {
     if (!selectedStartExam) return;
@@ -549,31 +614,126 @@ export default function ExamManagement() {
         ) }
       ]} rows={exams} />
       <section id="exam-questions" className="space-y-4 rounded-xl border border-blue-100 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-[#111a2b]">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+        <div className="flex flex-col justify-between gap-3 xl:flex-row xl:items-end">
           <div>
             <h3 className="text-xl font-bold">Exam Questions</h3>
-            <p className="break-words text-sm text-slate-500 dark:text-slate-400">Select an exam, then edit question text, options, answer key, type, or marks.</p>
+            <p className="break-words text-sm text-slate-500 dark:text-slate-400">Filter questions as cards, then click a card to view full details.</p>
           </div>
-          <div className="flex flex-col gap-2 sm:min-w-80 sm:flex-row">
+          <div className="grid gap-2 md:grid-cols-[minmax(220px,1fr)_minmax(180px,220px)_auto] xl:min-w-[720px]">
             <select className="input" value={selectedQuestionExamId} onChange={(event) => setSelectedQuestionExamId(event.target.value)} disabled={!exams.length}>
               {!exams.length && <option value="">No exams created</option>}
+              {!!exams.length && <option value={allQuestionsExamId}>All Exams</option>}
               {exams.map((exam) => <option key={exam._id} value={exam._id}>{exam.title}</option>)}
             </select>
+            <label className="relative block min-w-0">
+              <Search className="absolute left-3 top-2.5 text-slate-400" size={16} />
+              <input className="input pl-9" placeholder="Search questions" value={questionSearch} onChange={(event) => setQuestionSearch(event.target.value)} />
+            </label>
             <button className="btn-primary whitespace-nowrap" type="button" onClick={openAddQuestion}><Plus size={16} /> Add Question</button>
           </div>
         </div>
 
-        <DataTable columns={[
-          { key: "questionText", label: "Question", render: (row) => <span className="line-clamp-2 font-semibold">{row.questionText}</span> },
-          { key: "order", label: "Order", render: (row) => row.order || "-" },
-          { key: "questionType", label: "Type", render: (row) => row.questionType === "TRUE_FALSE" ? "True / false" : row.questionType === "SHORT_ANSWER" ? "Short answer" : "Multiple choice" },
-          { key: "correctAnswer", label: "Answer", render: (row) => <span className="font-mono text-xs font-bold">{row.correctAnswer}</span> },
-          { key: "marks", label: "Marks" },
-          { key: "actions", label: "Actions", render: (row) => (
-            <div className="flex items-center gap-2"><ActionIconButton label="Edit question" icon={Pencil} onClick={() => openEditQuestion(row)} tone="blue" /><ActionIconButton label="Delete question" icon={Trash2} onClick={() => setQuestionDeleteTarget(row)} tone="red" /></div>
-          ) }
-        ]} rows={questions.filter((question) => String(question.examId?._id || question.examId) === selectedQuestionExamId)} />
+        {questionsLoading && <p className="rounded-lg bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 dark:bg-slate-800 dark:text-sky-200">Loading questions from backend...</p>}
+
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {examQuestionCards.length ? examQuestionCards.map(({ exam, questions: cardQuestions, total, multipleChoice, trueFalse, shortAnswer }) => (
+            <button
+              key={exam._id}
+              className="group min-h-[220px] rounded-xl border border-blue-100 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[#1e9bf0] hover:shadow-[0_18px_45px_rgba(30,155,240,0.14)] disabled:cursor-not-allowed disabled:opacity-70 dark:border-slate-800 dark:bg-[#17223a] dark:hover:border-sky-700"
+              type="button"
+              onClick={() => openQuestionDetails(exam, cardQuestions)}
+              disabled={questionsLoading}
+            >
+              <div className="flex h-full flex-col">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">Exam</p>
+                    <h4 className="mt-1 line-clamp-2 text-lg font-bold text-slate-950 dark:text-slate-100">{exam.title}</h4>
+                    <p className="mt-1 text-xs font-semibold text-slate-500 dark:text-slate-400">{exam.courseId?.courseCode || exam.courseId?.courseName || "Course"}</p>
+                  </div>
+                  <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#0f88d2] dark:bg-sky-950/40 dark:text-sky-300"><Eye size={18} /></span>
+                </div>
+
+                <p className="mt-4 line-clamp-2 flex-1 text-sm font-semibold leading-6 text-slate-700 dark:text-slate-200">
+                  {cardQuestions[0]?.questionText || (total ? "No questions match this search." : "No questions added for this exam.")}
+                </p>
+
+                <div className="mt-4 grid grid-cols-2 gap-2 border-t border-blue-50 pt-3 dark:border-slate-800">
+                  <div className="rounded-xl bg-blue-50 p-3 text-center dark:bg-sky-950/30">
+                    <p className="text-2xl font-black text-[#0f88d2] dark:text-sky-300">{cardQuestions.length}</p>
+                    <p className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Shown</p>
+                  </div>
+                  <div className="rounded-xl bg-slate-50 p-3 text-center dark:bg-slate-800">
+                    <p className="text-2xl font-black text-slate-900 dark:text-slate-100">{total}</p>
+                    <p className="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Total</p>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold">
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">Choice {multipleChoice}</span>
+                  <span className="rounded-full bg-amber-50 px-2.5 py-1 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300">T/F {trueFalse}</span>
+                  <span className="rounded-full bg-purple-50 px-2.5 py-1 text-purple-700 dark:bg-purple-950/30 dark:text-purple-300">Short {shortAnswer}</span>
+                </div>
+              </div>
+            </button>
+          )) : (
+            <div className="rounded-xl border border-dashed border-blue-100 bg-blue-50/60 p-6 text-center text-sm font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-900/30 dark:text-slate-400 md:col-span-2 xl:col-span-3">
+              No exams created.
+            </div>
+          )}
+        </div>
       </section>
+      {questionDetail && (
+        <Modal title="All Questions" onClose={() => setQuestionDetail(null)}>
+          <div className="space-y-4">
+            <div className="rounded-xl border border-blue-100 bg-blue-50 p-4 dark:border-slate-800 dark:bg-[#17324d]">
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-300">{questionDetail.title}</p>
+              <p className="mt-1 text-lg font-bold text-slate-950 dark:text-slate-100">{questionDetail.questions.length} question{questionDetail.questions.length === 1 ? "" : "s"}</p>
+            </div>
+
+            <div className="max-h-[62vh] space-y-3 overflow-y-auto pr-1">
+              {questionDetail.questions.map((question, index) => (
+                <article key={question._id} className="rounded-xl border border-slate-100 bg-white p-4 dark:border-slate-800 dark:bg-[#0f172a]">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:bg-sky-950/40 dark:text-sky-200">Question {question.order || index + 1}</span>
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">{questionTypeLabel(question.questionType)}</span>
+                        {selectedQuestionExamId === allQuestionsExamId && <span className="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700 dark:bg-purple-950/30 dark:text-purple-200">{examTitleById.get(questionExamId(question)) || "Exam"}</span>}
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200">{question.marks} mark{Number(question.marks) === 1 ? "" : "s"}</span>
+                      </div>
+                      <p className="mt-3 whitespace-pre-wrap text-sm font-semibold leading-6 text-slate-950 dark:text-slate-100">{question.questionText}</p>
+                    </div>
+                    <div className="flex shrink-0 gap-2">
+                      <ActionIconButton label="Edit question" icon={Pencil} onClick={() => { setQuestionDetail(null); openEditQuestion(question); }} tone="blue" />
+                      <ActionIconButton label="Delete question" icon={Trash2} onClick={() => { setQuestionDetail(null); setQuestionDeleteTarget(question); }} tone="red" />
+                    </div>
+                  </div>
+
+                  {question.questionType === "MULTIPLE_CHOICE" && (
+                    <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                      {[["A", question.optionA], ["B", question.optionB], ["C", question.optionC], ["D", question.optionD]].map(([letter, option]) => (
+                        <div key={letter} className={`rounded-lg border px-3 py-2 text-sm ${question.correctAnswer === letter ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200" : "border-slate-100 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-[#111a2b] dark:text-slate-200"}`}>
+                          <span className="font-black">{letter}.</span> {option || "Not provided"}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="mt-4 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-sm dark:border-emerald-900 dark:bg-emerald-950/30">
+                    <span className="font-bold text-emerald-700 dark:text-emerald-300">Correct answer:</span>
+                    <span className="ml-2 font-mono font-black text-emerald-800 dark:text-emerald-200">{question.correctAnswer}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="flex justify-end">
+              <button className="btn-secondary" type="button" onClick={() => setQuestionDetail(null)}>Close</button>
+            </div>
+          </div>
+        </Modal>
+      )}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_30px_90px_rgba(15,23,42,0.28)] dark:border-slate-800 dark:bg-[#111a2b]">
@@ -831,28 +991,3 @@ export default function ExamManagement() {
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

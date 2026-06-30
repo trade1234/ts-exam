@@ -1,81 +1,123 @@
-import { useState } from "react";
-import { Navigate } from "react-router-dom";
-import { ArrowRight, CheckCircle2 } from "lucide-react";
-import { useAuth } from "../context/AuthContext.jsx";
+import { ArrowRight, ClipboardCheck, FileText, GraduationCap, MessageSquareText, ShieldCheck, Star } from "lucide-react";
 import logoUrl from "../logo/download.png";
 
-export default function Home() {
-  const { user } = useAuth();
-  const [showStartNotice, setShowStartNotice] = useState(false);
-
-  function handleStartExam() {
-    setShowStartNotice(true);
-    window.open("/#/login", "_blank", "noopener,noreferrer");
-    window.setTimeout(() => setShowStartNotice(false), 3500);
+const serviceLinks = [
+  {
+    title: "Online Exam Portal",
+    description: "Sign in to take scheduled exams, answer questions, and view your result after submission.",
+    href: "https://examfrontend-f35t.onrender.com/",
+    icon: GraduationCap,
+    tone: "blue",
+    action: "Open exam"
+  },
+  {
+    title: "Evaluation Form",
+    description: "Submit your training or service evaluation using the official online evaluation form.",
+    href: "https://tessbin-evaluation-tdkp.vercel.app/",
+    icon: ClipboardCheck,
+    tone: "emerald",
+    action: "Open evaluation"
+  },
+  {
+    title: "Google Review",
+    description: "Share your public review and feedback for Trade Ethiopia School of Business and Innovation.",
+    href: "https://g.page/r/CWgOATTV5eTTEBM/review",
+    icon: Star,
+    tone: "amber",
+    action: "Write review"
+  },
+  {
+    title: "Application Form",
+    description: "Fill out the online application form and upload the required documents.",
+    href: "http://localhost:5174/#/apply",
+    icon: FileText,
+    tone: "purple",
+    action: "Apply now"
   }
+];
 
-  if (user) return <Navigate to={user.role === "ADMIN" ? "/admin" : "/student"} replace />;
+const toneClasses = {
+  blue: "bg-blue-50 text-[#0f88d2] ring-blue-100 group-hover:bg-[#0f88d2] group-hover:text-white",
+  emerald: "bg-emerald-50 text-emerald-700 ring-emerald-100 group-hover:bg-emerald-600 group-hover:text-white",
+  amber: "bg-amber-50 text-amber-700 ring-amber-100 group-hover:bg-amber-500 group-hover:text-white",
+  purple: "bg-purple-50 text-purple-700 ring-purple-100 group-hover:bg-purple-600 group-hover:text-white"
+};
 
+export default function Home() {
   return (
-    <main className="relative min-h-screen bg-white text-slate-950">
-      {showStartNotice && (
-        <div className="fixed right-5 top-5 z-50 flex max-w-sm items-start gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-4 text-emerald-900 shadow-[0_18px_45px_rgba(16,185,129,0.22)]" role="status" aria-live="polite">
-          <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" size={24} />
-          <div>
-            <p className="font-semibold">Login opened</p>
-            <p className="mt-1 text-sm text-emerald-800">A new tab is ready. Please sign in to continue.</p>
-          </div>
-        </div>
-      )}
-
-      <nav className="border-b border-slate-100 bg-white">
+    <main className="min-h-screen bg-[#edf4fb] text-slate-950">
+      <nav className="border-b border-blue-100 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-8 lg:px-10">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white p-2 shadow-[0_12px_28px_rgba(15,84,122,0.14)]">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="logo-tile flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white p-2 shadow-[0_12px_28px_rgba(15,84,122,0.14)] sm:h-16 sm:w-16">
               <img className="h-full w-full object-contain" src={logoUrl} alt="Trade Ethiopia logo" />
             </div>
-            <div>
-              <p className="max-w-[13rem] text-sm font-semibold leading-tight tracking-wide sm:max-w-none sm:text-base">Trade Ethiopia School of Business and Innovation</p>
-              <p className="text-xs text-slate-500">TESBINN FINAL EXAMINATION</p>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold leading-tight tracking-wide text-slate-950 sm:text-base">Trade Ethiopia SBI</p>
+              <p className="truncate text-xs font-semibold text-[#0f88d2]">TESBINN Online Services</p>
             </div>
           </div>
-          <button type="button" className="inline-flex shrink-0 items-center gap-2 rounded-md bg-[#0f7ead] px-4 py-2.5 text-sm font-semibold text-white sm:px-5 shadow-sm transition hover:bg-[#096f9b]" onClick={handleStartExam}>
-            Sign in <ArrowRight size={16} />
-          </button>
+          <a className="hidden shrink-0 items-center gap-2 rounded-lg bg-[#0f7ead] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#096f9b] sm:inline-flex" href="https://examfrontend-f35t.onrender.com/" target="_blank" rel="noreferrer">
+            Exam login <ArrowRight size={16} />
+          </a>
         </div>
       </nav>
 
-      <section className="mx-auto flex min-h-[calc(100vh-76px)] max-w-5xl flex-col items-center justify-center px-4 py-10 text-center sm:min-h-[calc(100vh-96px)] sm:px-8 sm:py-16 lg:px-10">
-        <div className="mb-6 flex h-24 w-24 sm:mb-8 sm:h-32 sm:w-32 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white p-3 shadow-[0_18px_40px_rgba(15,84,122,0.16)]">
-          <img className="h-full w-full object-contain" src={logoUrl} alt="Trade Ethiopia logo" />
+      <section className="mx-auto grid min-h-[calc(100vh-88px)] max-w-7xl gap-6 px-4 py-6 sm:px-8 sm:py-10 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-center lg:px-10">
+        <div className="rounded-3xl border border-blue-100 bg-white p-5 shadow-[0_24px_70px_rgba(30,41,59,0.12)] sm:p-8 lg:p-10">
+          <div className="mb-7 flex items-center gap-4">
+            <div className="logo-tile flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white p-3 shadow-[0_18px_40px_rgba(15,84,122,0.16)] sm:h-24 sm:w-24">
+              <img className="h-full w-full object-contain" src={logoUrl} alt="Trade Ethiopia logo" />
+            </div>
+            <div>
+              <p className="text-xs font-black uppercase tracking-wide text-[#0f88d2]">Online service gateway</p>
+              <h1 className="mt-2 text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-5xl">Choose Your Service</h1>
+            </div>
+          </div>
+
+          <p className="max-w-2xl text-base font-medium leading-7 text-slate-600 sm:text-lg sm:leading-8">
+            Welcome to Trade Ethiopia School of Business and Innovation. Select the service you need: exam portal, evaluation form, Google review, or application form.
+          </p>
+
+          <div className="mt-7 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl bg-[#edf6ff] p-4">
+              <p className="text-2xl font-black text-[#0f88d2]">4</p>
+              <p className="text-xs font-bold uppercase text-slate-500">Online links</p>
+            </div>
+            <div className="rounded-2xl bg-emerald-50 p-4">
+              <ShieldCheck className="mb-2 text-emerald-600" size={22} />
+              <p className="text-sm font-bold text-emerald-800">Official access</p>
+            </div>
+            <div className="rounded-2xl bg-amber-50 p-4">
+              <MessageSquareText className="mb-2 text-amber-600" size={22} />
+              <p className="text-sm font-bold text-amber-800">Feedback ready</p>
+            </div>
+          </div>
         </div>
 
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-          Welcome to Trade Ethiopia School of Business and Innovation
-        </h1>
-
-        <p className="mt-5 max-w-3xl text-base leading-7 sm:text-lg sm:leading-8 text-slate-600">
-          Welcome to TESBINN FINAL EXAMINATION. Sign in to access your scheduled exams, submit answers, and view your results.
-        </p>
-
-        <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">
-          Please sign in to continue. Remember to review exam guidelines before starting your test.
-        </p>
-
-        <p className="mt-7 text-xl font-semibold sm:text-2xl text-[#0f7ead]">Learn. Achieve. Succeed.</p>
-
-        <button type="button" className="mt-9 inline-flex min-h-12 w-full max-w-sm items-center justify-center gap-3 rounded-lg bg-[#0f7ead] px-6 py-3 text-base sm:min-h-14 sm:px-8 sm:py-4 sm:text-lg font-bold text-white shadow-[0_18px_35px_rgba(15,126,173,0.28)] ring-4 ring-[#d7eff8] transition hover:bg-[#096f9b] focus:outline-none focus:ring-4 focus:ring-[#8ed2ec]" onClick={handleStartExam}>
-          Sign in to continue
-          <ArrowRight size={22} />
-        </button>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {serviceLinks.map(({ title, description, href, icon: Icon, tone, action }) => (
+            <a
+              key={title}
+              className="group flex min-h-[220px] flex-col justify-between rounded-2xl border border-blue-100 bg-white p-5 shadow-[0_16px_45px_rgba(30,41,59,0.08)] transition hover:-translate-y-1 hover:border-[#1e9bf0] hover:shadow-[0_26px_70px_rgba(30,155,240,0.16)] focus:outline-none focus:ring-4 focus:ring-blue-100"
+              href={href}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <div>
+                <div className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl ring-4 transition ${toneClasses[tone]}`}>
+                  <Icon size={26} />
+                </div>
+                <h2 className="text-xl font-black tracking-tight text-slate-950">{title}</h2>
+                <p className="mt-3 text-sm font-medium leading-6 text-slate-600">{description}</p>
+              </div>
+              <span className="mt-6 inline-flex items-center gap-2 text-sm font-black text-[#0f88d2] transition group-hover:translate-x-1">
+                {action} <ArrowRight size={17} />
+              </span>
+            </a>
+          ))}
+        </div>
       </section>
     </main>
   );
 }
-
-
-
-
-
-
-

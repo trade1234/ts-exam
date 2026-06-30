@@ -158,13 +158,15 @@ export async function reviewResult(req, res, next) {
       .populate("studentId", "name email enrollmentNumber")
       .populate({ path: "examId", populate: { path: "courseId" } });
     if (!attempt) return res.status(404).json({ message: "Completed result not found" });
+    const examObjectId = attempt.examId?._id || attempt.examId;
+    if (!examObjectId) return res.status(404).json({ message: "Exam for this result was not found" });
 
     const [questions, answers] = await Promise.all([
-      Question.find({ examId: attempt.examId._id }).sort({ createdAt: 1 }),
+      Question.find({ examId: examObjectId }).sort({ createdAt: 1 }),
       Answer.find({ attemptId: attempt._id })
     ]);
     const answerMap = new Map(answers.map((answer) => [String(answer.questionId), answer.selectedAnswer || ""]));
-    const totalMarks = questions.reduce((total, question) => total + question.marks, 0) || attempt.examId.totalMarks;
+    const totalMarks = questions.reduce((total, question) => total + question.marks, 0) || attempt.examId?.totalMarks || 0;
     const items = questions.map((question, index) => {
       const selectedAnswer = answerMap.get(String(question._id)) || "";
       const correct = isCorrectAnswer(question, selectedAnswer);

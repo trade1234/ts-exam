@@ -1,4 +1,4 @@
-import { AlertCircle, Bell, BookOpen, ChevronDown, ClipboardList, Clock3, FileBarChart, Home, LogOut, Moon, Radio, Search, Settings, Sun, UserRound, Users } from "lucide-react";
+import { AlertCircle, Bell, BookOpen, ChevronDown, ClipboardList, Clock3, FileBarChart, FileCheck2, Home, LogOut, Moon, Radio, Search, Settings, Sun, UserRound, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -136,6 +136,7 @@ export default function Layout({ role }) {
     { to: "/admin/courses", label: "Courses", icon: BookOpen },
     { to: "/admin/exams", label: "Exams", icon: ClipboardList },
     { to: "/admin/students", label: "Students", icon: Users },
+    { to: "/admin/applications", label: "Applications", icon: FileCheck2 },
     { to: "/admin/results", label: "Results", icon: FileBarChart },
     { to: "/admin/monitor", label: "Live Monitor", icon: Radio }
   ];
@@ -151,6 +152,7 @@ export default function Layout({ role }) {
       { label: "Courses", to: "/admin/courses" },
       { label: "Exams", to: "/admin/exams" },
       { label: "Students", to: "/admin/students" },
+      { label: "Applications", to: "/admin/applications" },
       { label: "Live Security", to: "/admin/monitor" }
     ]
     : [
@@ -182,7 +184,7 @@ export default function Layout({ role }) {
           <div className="grid min-h-screen lg:min-h-[calc(100vh-4rem)] lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]">
             <aside className="hidden border-r border-slate-100 bg-white transition-colors dark:border-slate-800 dark:bg-[#111a2b] lg:flex lg:flex-col">
               <div className="flex h-[92px] items-center gap-4 border-b border-slate-100 px-5 xl:px-8 transition-colors dark:border-slate-800">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white p-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                <div className="logo-tile flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white p-1.5 shadow-sm dark:border-white/70 dark:bg-white">
                   <img className="h-full w-full object-contain" src={logoUrl} alt="Trade Ethiopia logo" />
                 </div>
                 <div>
@@ -235,12 +237,12 @@ export default function Layout({ role }) {
             <main className="min-w-0 bg-[#fafafa] transition-colors dark:bg-[#0f172a]">
               <header className="sticky top-0 z-20 flex min-h-[58px] items-center justify-between gap-2 border-b border-slate-100 bg-white px-3 transition-colors dark:border-slate-800 dark:bg-[#111a2b] min-[420px]:min-h-[68px] min-[420px]:px-4 sm:min-h-[92px] sm:px-6 lg:px-8 xl:px-16">
                 <div className="flex min-w-0 flex-1 items-center gap-2 sm:hidden">
-                  <div className="flex h-9 w-9 shrink-0 min-[420px]:h-11 min-[420px]:w-11 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                  <div className="logo-tile flex h-9 w-9 shrink-0 min-[420px]:h-11 min-[420px]:w-11 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white p-1 shadow-sm dark:border-white/70 dark:bg-white">
                     <img className="h-full w-full object-contain" src={logoUrl} alt="Trade Ethiopia logo" />
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-[11px] font-bold min-[420px]:text-sm text-slate-950 dark:text-slate-100">Trade Ethiopia SBI</p>
-                    <p className="hidden truncate text-xs text-slate-500 min-[420px]:block dark:text-slate-400">{role === "ADMIN" ? "Admin" : "Exams"}</p>
+                    <p className="hidden truncate text-xs text-slate-500 dark:text-slate-400 min-[420px]:block dark:text-slate-400">{role === "ADMIN" ? "Admin" : "Exams"}</p>
                   </div>
                 </div>
                 <div className="hidden min-w-0 flex-1 items-center gap-4 sm:flex">
@@ -298,7 +300,7 @@ export default function Layout({ role }) {
                             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#ff9b71] to-[#ec5cff] text-base font-bold text-white">{initials}</div>
                             <div className="min-w-0">
                               <p className="truncate font-bold text-slate-950 dark:text-slate-100">{user?.name || "User"}</p>
-                              <p className="hidden truncate text-xs text-slate-500 min-[420px]:block dark:text-slate-400">{user?.email || user?.enrollmentNumber}</p>
+                              <p className="hidden truncate text-xs text-slate-500 dark:text-slate-400 min-[420px]:block dark:text-slate-400">{user?.email || user?.enrollmentNumber}</p>
                             </div>
                           </div>
                         </div>
@@ -340,6 +342,7 @@ export default function Layout({ role }) {
     </div>
   );
 }
+
 
 
 

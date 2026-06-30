@@ -22,10 +22,10 @@ export default function ExamScreen() {
   });
   const extraMinutes = initial?.exam?.extraTimeMinutes || 0;
   const [remaining, setRemaining] = useState(() => {
-    if (!initial) return 0;
+    if (!initial?.exam || !initial?.attempt) return 0;
     const now = initial.exam.isPaused && initial.exam.pausedAt ? new Date(initial.exam.pausedAt).getTime() : Date.now();
     const elapsed = Math.floor((now - new Date(initial.attempt.startedAt).getTime()) / 1000);
-    const durationRemaining = (initial.exam.durationMinutes + extraMinutes) * 60 - elapsed;
+    const durationRemaining = ((initial.exam.durationMinutes || 0) + extraMinutes) * 60 - elapsed;
     const endDateRemaining = Math.floor((new Date(initial.exam.endDate).getTime() - now) / 1000);
     return Math.max(Math.min(durationRemaining, endDateRemaining), 0);
   });
@@ -34,8 +34,8 @@ export default function ExamScreen() {
   const selectedAnswer = question ? answers[question._id]?.selectedAnswer || "" : "";
   const isShortAnswer = question?.questionType === "SHORT_ANSWER";
   const isTrueFalse = question?.questionType === "TRUE_FALSE";
-  const answeredCount = bundle?.questions.filter((item) => answers[item._id]?.selectedAnswer).length || 0;
-  const unansweredCount = (bundle?.questions.length || 0) - answeredCount;
+  const answeredCount = bundle?.questions?.filter((item) => item?._id && answers[item._id]?.selectedAnswer).length || 0;
+  const unansweredCount = (bundle?.questions?.length || 0) - answeredCount;
 
   useEffect(() => {
     if (!bundle) navigate("/student/courses");
@@ -148,13 +148,13 @@ export default function ExamScreen() {
     const interval = setInterval(async () => {
       try {
         const { data } = await api.get("/exams");
-        const latestExam = data.find((exam) => exam._id === bundle.exam._id);
+        const latestExam = (Array.isArray(data) ? data : []).find((exam) => exam?._id === bundle.exam?._id);
         if (!latestExam) return;
         setIsPaused(Boolean(latestExam.isPaused));
         setBundle((current) => current ? { ...current, exam: latestExam } : current);
         setRemaining((current) => {
           const referenceTime = latestExam.isPaused && latestExam.pausedAt ? new Date(latestExam.pausedAt).getTime() : Date.now();
-          const elapsed = Math.floor((referenceTime - new Date(bundle.attempt.startedAt).getTime()) / 1000);
+          const elapsed = Math.floor((referenceTime - new Date(bundle.attempt?.startedAt).getTime()) / 1000);
           const durationRemaining = ((latestExam.durationMinutes || 0) + (latestExam.extraTimeMinutes || 0)) * 60 - elapsed;
           const endDateRemaining = Math.floor((new Date(latestExam.endDate).getTime() - referenceTime) / 1000);
           const refreshedRemaining = Math.max(Math.min(durationRemaining, endDateRemaining), 0);
@@ -168,7 +168,7 @@ export default function ExamScreen() {
     return () => clearInterval(interval);
   }, [bundle?.exam?._id]);
 
-  if (!bundle || !question) return null;
+  if (!bundle?.exam || !bundle?.attempt || !question) return null;
 
   async function submit({ skipConfirm = false } = {}) {
     if (!skipConfirm) {
@@ -179,7 +179,7 @@ export default function ExamScreen() {
     setSubmitting(true);
     try {
       await save();
-      await api.post("/exams/submit", { attemptId: bundle.attempt._id });
+      await api.post("/exams/submit", { attemptId: bundle.attempt?._id });
       sessionStorage.removeItem("active_exam");
       navigate("/student/results");
     } finally {
@@ -216,8 +216,8 @@ export default function ExamScreen() {
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-3 md:flex-row md:items-center">
           <Brand />
           <div className="min-w-0 text-sm md:text-right">
-            <p className="break-words font-bold">{bundle.exam.courseId?.courseName}</p>
-            <p className="break-words text-slate-500">{bundle.exam.title}</p>
+            <p className="break-words font-bold">{bundle.exam?.courseId?.courseName || "Course"}</p>
+            <p className="break-words text-slate-500">{bundle.exam?.title || "Exam"}</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
             <div className={`rounded-lg px-3 py-1.5 text-xs font-bold ${saveStatus === "error" ? "bg-red-50 text-red-700" : saveStatus === "saved" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>

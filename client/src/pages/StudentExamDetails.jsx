@@ -17,11 +17,11 @@ export default function StudentExamDetails() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [now, setNow] = useState(new Date());
-  const exam = useMemo(() => exams.find((item) => item._id === examId), [exams, examId]);
+  const exam = useMemo(() => exams.find((item) => item?._id === examId), [exams, examId]);
   const image = courseImages[Math.abs((examId || "").length) % courseImages.length];
 
   useEffect(() => {
-    api.get("/exams").then((res) => setExams(res.data));
+    api.get("/exams").then((res) => setExams(Array.isArray(res.data) ? res.data.filter(Boolean) : []));
   }, []);
 
   useEffect(() => {

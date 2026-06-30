@@ -115,7 +115,7 @@ export default function AdminDashboard() {
     <div className="min-w-0 space-y-6 rounded-xl bg-[#f8fbff] p-3 text-slate-950 dark:bg-[#0f172a] dark:text-slate-100 sm:p-6">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div className="flex min-w-0 items-start gap-3 sm:items-center sm:gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white p-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+          <div className="logo-tile flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-100 bg-white p-1.5 shadow-sm dark:border-white/70 dark:bg-white">
             <img className="h-full w-full object-contain" src={logoUrl} alt="Trade Ethiopia logo" />
           </div>
           <div>

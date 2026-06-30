@@ -4,7 +4,10 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
 import morgan from "morgan";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { env } from "./config/env.js";
+import applicationRoutes from "./routes/application.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import courseRoutes from "./routes/course.routes.js";
 import examRoutes from "./routes/exam.routes.js";
@@ -14,6 +17,7 @@ import userRoutes from "./routes/user.routes.js";
 import { errorHandler, notFound } from "./middlewares/error.js";
 
 export const app = express();
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 app.use(helmet());
 const allowedOrigins = new Set([env.clientUrl, "http://localhost:5173", "http://localhost:5174"]);
@@ -29,8 +33,11 @@ app.use(express.json({ limit: "2mb" }));
 app.use(mongoSanitize());
 app.use(morgan("dev"));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
+app.use("/uploads", express.static(join(__dirname, "uploads")));
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
+app.use("/api/applications", applicationRoutes);
+app.use("/api/application", applicationRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/exams", examRoutes);
@@ -40,4 +47,3 @@ app.use("/api/users", userRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
-

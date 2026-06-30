@@ -34,7 +34,7 @@ export async function listQuestions(req, res, next) {
   try {
     const query = req.query.examId ? { examId: req.query.examId } : {};
     const projection = req.user.role === "ADMIN" ? "" : "-correctAnswer";
-    res.json(await Question.find(query).select(projection).sort({ order: 1, createdAt: 1 }));
+    res.json(await Question.find(query).select(projection).populate("examId", "title courseId").sort({ createdAt: -1, order: -1 }));
   } catch (error) {
     next(error);
   }

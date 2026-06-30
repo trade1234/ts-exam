@@ -100,11 +100,11 @@ export default function StudentExams() {
   const [now, setNow] = useState(new Date());
   const [filter, setFilter] = useState("all");
 
-  useEffect(() => { api.get("/exams").then((res) => setExams(res.data)); }, []);
+  useEffect(() => { api.get("/exams").then((res) => setExams(Array.isArray(res.data) ? res.data.filter(Boolean) : [])); }, []);
   useEffect(() => {
     const interval = setInterval(() => {
       setNow(new Date());
-      api.get("/exams").then((res) => setExams(res.data));
+      api.get("/exams").then((res) => setExams(Array.isArray(res.data) ? res.data.filter(Boolean) : []));
     }, 10000);
     return () => clearInterval(interval);
   }, []);
@@ -141,7 +141,7 @@ export default function StudentExams() {
       </div>
 
       <div className="grid min-w-0 gap-5 md:grid-cols-2 xl:grid-cols-3 xl:gap-9">
-        {visibleExams.map((exam, index) => <ExamCard key={exam._id} exam={exam} index={index} now={now} onOpen={openExam} />)}
+        {visibleExams.filter(Boolean).map((exam, index) => <ExamCard key={exam._id} exam={exam} index={index} now={now} onOpen={openExam} />)}
       </div>
 
       {!visibleExams.length && (

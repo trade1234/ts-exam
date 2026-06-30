@@ -1,16 +1,17 @@
 export default function DataTable({ columns, rows, empty = "No records found" }) {
+  const safeRows = Array.isArray(rows) ? rows.filter(Boolean) : [];
   return (
     <div className="card min-w-0 overflow-hidden">
       <div className="md:hidden">
-        {rows?.length ? (
+        {safeRows.length ? (
           <div className="divide-y divide-blue-50 dark:divide-slate-800">
-            {rows.map((row, index) => (
-              <article key={row._id || index} className="min-w-0 space-y-3 bg-white p-3 dark:bg-[#111a2b] min-[420px]:p-4">
+            {safeRows.map((row, index) => (
+              <article key={row?._id || index} className="min-w-0 space-y-3 bg-white p-3 dark:bg-[#111a2b] min-[420px]:p-4">
                 {columns.map((column) => (
                   <div key={column.key} className="grid min-w-0 gap-1">
                     <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">{column.label}</p>
                     <div className="min-w-0 break-words text-sm text-slate-800 dark:text-slate-100">
-                      {column.render ? column.render(row) : row[column.key]}
+                      {column.render ? column.render(row) : row?.[column.key]}
                     </div>
                   </div>
                 ))}
@@ -28,9 +29,9 @@ export default function DataTable({ columns, rows, empty = "No records found" })
             <tr>{columns.map((column) => <th key={column.key} className="px-3 py-3 lg:px-4">{column.label}</th>)}</tr>
           </thead>
           <tbody className="divide-y divide-blue-50 dark:divide-slate-800">
-            {rows?.length ? rows.map((row, index) => (
-              <tr key={row._id || index} className="bg-white transition hover:bg-slate-50 dark:bg-[#111a2b] dark:hover:bg-[#17223a]">
-                {columns.map((column) => <td key={column.key} className="px-3 py-3 align-top lg:px-4">{column.render ? column.render(row) : row[column.key]}</td>)}
+            {safeRows.length ? safeRows.map((row, index) => (
+              <tr key={row?._id || index} className="bg-white transition hover:bg-slate-50 dark:bg-[#111a2b] dark:hover:bg-[#17223a]">
+                {columns.map((column) => <td key={column.key} className="px-3 py-3 align-top lg:px-4">{column.render ? column.render(row) : row?.[column.key]}</td>)}
               </tr>
             )) : (
               <tr className="bg-white dark:bg-[#111a2b]"><td className="px-4 py-8 text-center text-slate-500 dark:text-slate-400" colSpan={columns.length}>{empty}</td></tr>

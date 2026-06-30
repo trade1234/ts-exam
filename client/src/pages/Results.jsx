@@ -41,13 +41,13 @@ export default function Results() {
   const query = useMemo(() => buildResultQuery(filters), [filters]);
 
   useEffect(() => {
-    api.get("/courses").then((res) => setCourses(res.data));
+    api.get("/courses").then((res) => setCourses(Array.isArray(res.data) ? res.data.filter(Boolean) : []));
   }, []);
 
   useEffect(() => {
-    api.get(`/results${query}`).then((res) => setCompletedRows(res.data));
+    api.get(`/results${query}`).then((res) => setCompletedRows(Array.isArray(res.data) ? res.data.filter(Boolean) : []));
     if (isAdmin) {
-      api.get(`/results/active${query}`).then((res) => setActiveRows(res.data));
+      api.get(`/results/active${query}`).then((res) => setActiveRows(Array.isArray(res.data) ? res.data.filter(Boolean) : []));
     }
   }, [isAdmin, query]);
 
@@ -62,6 +62,7 @@ export default function Results() {
     setReviewError("");
     setReviewLoading(true);
     try {
+      if (!row?._id) throw new Error("Result record is missing an id.");
       let data;
       try {
         const response = await api.get(`/results/review/${row._id}`);
@@ -73,7 +74,7 @@ export default function Results() {
       }
       setReview(data);
     } catch (error) {
-      setReviewError(error.response?.data?.message || "Could not load answer sheet.");
+      setReviewError(error.response?.data?.message || error.message || "Could not load answer sheet.");
     } finally {
       setReviewLoading(false);
     }
@@ -99,7 +100,7 @@ export default function Results() {
           <span className="inline-flex items-center gap-2"><Filter size={16} /> Course</span>
           <select className="input" value={filters.courseId} onChange={(event) => updateFilter("courseId", event.target.value)}>
             <option value="">All courses</option>
-            {courses.map((course) => <option key={course._id} value={course._id}>{course.courseCode} - {course.courseName}</option>)}
+            {courses.filter(Boolean).map((course) => <option key={course._id} value={course._id}>{course.courseCode} - {course.courseName}</option>)}
           </select>
         </label>
         <label className="space-y-1 text-sm font-semibold text-slate-600 dark:text-slate-300">
@@ -171,18 +172,18 @@ export default function Results() {
               <div className="grid gap-3 rounded-xl bg-[#edf6ff] p-4 text-sm dark:bg-[#17324d] sm:grid-cols-2">
                 <div>
                   <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Student</p>
-                  <p className="mt-1 font-semibold text-slate-950 dark:text-slate-100">{review.attempt.studentId?.name}</p>
-                  <p className="font-mono text-xs text-slate-500 dark:text-slate-400">{review.attempt.studentId?.enrollmentNumber}</p>
+                  <p className="mt-1 font-semibold text-slate-950 dark:text-slate-100">{review.attempt?.studentId?.name || "Unknown student"}</p>
+                  <p className="font-mono text-xs text-slate-500 dark:text-slate-400">{review.attempt?.studentId?.enrollmentNumber || review.attempt?.studentId?.email || ""}</p>
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">Score</p>
-                  <p className="mt-1 font-semibold text-slate-950 dark:text-slate-100">{review.attempt.score}/{review.totalMarks} ({review.attempt.percentage}%)</p>
-                  <p className="text-xs font-bold text-[#0f88d2]">{review.attempt.status}</p>
+                  <p className="mt-1 font-semibold text-slate-950 dark:text-slate-100">{review.attempt?.score ?? 0}/{review.totalMarks ?? 0} ({review.attempt?.percentage ?? 0}%)</p>
+                  <p className="text-xs font-bold text-[#0f88d2]">{review.attempt?.status || "UNKNOWN"}</p>
                 </div>
               </div>
 
               <div className="space-y-3">
-                {review.items.map((item) => (
+                {(review.items || []).filter(Boolean).map((item) => (
                   <article key={item.questionId} className={`rounded-xl border p-4 ${item.isCorrect ? "border-emerald-100 bg-emerald-50/60 dark:border-emerald-900/40 dark:bg-emerald-950/20" : "border-red-100 bg-red-50/60 dark:border-red-900/40 dark:bg-red-950/20"}`}>
                     <div className="flex items-start gap-3">
                       {item.isCorrect ? <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600" size={20} /> : <XCircle className="mt-0.5 shrink-0 text-red-600" size={20} />}
