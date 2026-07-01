@@ -174,6 +174,21 @@ function DetailSection({ title, icon: Icon, items }) {
   );
 }
 
+
+function OfficialPhotoPlacementPreview() {
+  return (
+    <section className="rounded-xl border border-slate-200 bg-slate-100 p-3 dark:border-slate-800 dark:bg-[#0f172a]">
+      <div className="mx-auto aspect-[210/297] w-full max-w-[760px] border border-slate-900 bg-white p-8 text-slate-950 shadow-sm dark:border-slate-600 dark:bg-white dark:text-slate-950 sm:p-10">
+        <div className="flex justify-end">
+          <div className="flex h-40 w-36 items-center justify-center border-2 border-slate-950 bg-white p-3 text-center text-[11px] font-bold uppercase leading-5 tracking-wide text-slate-700 sm:h-48 sm:w-40">
+            Affix Passport Size Photo Here
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Applications() {
   const [rows, setRows] = useState([]);
   const [search, setSearch] = useState("");
@@ -321,7 +336,7 @@ export default function Applications() {
         </Modal>
       )}
       {selected && (
-        <Modal title={`Application ${selected.applicationNumber}`} onClose={() => setSelected(null)}>
+        <Modal title={`Application ${selected.applicationNumber}`} onClose={() => setSelected(null)} widthClass="max-w-5xl">
           <div className="space-y-4">
             <div className="flex flex-col gap-4 rounded-xl border border-blue-100 bg-blue-50 p-4 dark:border-slate-800 dark:bg-[#17324d] sm:flex-row sm:items-center sm:justify-between">
               <div>
@@ -336,29 +351,7 @@ export default function Applications() {
               </div>
             </div>
 
-            {(selected.passportPhoto?.path || selected.fayadaDigitalId?.path || selected.paymentScreenshot?.path) && (
-              <section className="grid gap-4 rounded-xl border border-blue-100 bg-white p-4 dark:border-slate-800 dark:bg-[#111a2b] md:grid-cols-2">
-                {selected.passportPhoto?.path && (
-                  <div>
-                    <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">Passport Photo</p>
-                    <img className="h-64 w-full rounded-lg border border-slate-200 bg-slate-50 object-contain dark:border-slate-700 dark:bg-[#0f172a]" src={assetUrl(selected.passportPhoto.path)} alt="Passport" />
-                  </div>
-                )}
-                {selected.fayadaDigitalId?.path && (
-                  <div>
-                    <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">FAYADA / National ID</p>
-                    <img className="h-64 w-full rounded-lg border border-slate-200 bg-slate-50 object-contain dark:border-slate-700 dark:bg-[#0f172a]" src={assetUrl(selected.fayadaDigitalId.path)} alt="FAYADA National ID" />
-                  </div>
-                )}
-                {selected.paymentScreenshot?.path && (
-                  <div>
-                    <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">Payment Screenshot</p>
-                    <img className="h-64 w-full rounded-lg border border-slate-200 bg-slate-50 object-contain dark:border-slate-700 dark:bg-[#0f172a]" src={assetUrl(selected.paymentScreenshot.path)} alt="Payment screenshot" />
-                  </div>
-                )}
-              </section>
-            )}
-
+            <OfficialPhotoPlacementPreview />
             <DetailSection title="Personal Information" icon={UserRound} items={[
               ["Full Name", fullName(selected.personalInformation)],
               ["Gender", selected.personalInformation?.gender],
