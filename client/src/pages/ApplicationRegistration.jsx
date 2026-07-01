@@ -281,9 +281,9 @@ export default function ApplicationRegistration() {
   } = useForm({ defaultValues, mode: "onTouched" });
 
   const values = watch();
-  const photoName = values.passportPhoto?.[0]?.name;
-  const fayadaName = values.fayadaDigitalId?.[0]?.name;
-  const paymentScreenshotName = values.paymentScreenshot?.[0]?.name;
+  const photoStatus = values.passportPhoto?.[0] ? "Uploaded" : "Not uploaded";
+  const fayadaStatus = values.fayadaDigitalId?.[0] ? "Uploaded" : "Not uploaded";
+  const paymentScreenshotStatus = values.paymentScreenshot?.[0] ? "Uploaded" : "Not uploaded";
 
   const reviewItems = useMemo(() => [
     ["First Name", values.firstName],
@@ -300,8 +300,8 @@ export default function ApplicationRegistration() {
     ["Marital Status", values.maritalStatus],
     ["Physical Disability", values.physicalDisability],
     ["Disability Description", values.disabilityDescription],
-    ["Passport Photo", photoName],
-    ["FAYADA DIGITAL ID", fayadaName],
+    ["Passport Photo", photoStatus],
+    ["FAYADA DIGITAL ID", fayadaStatus],
     ["Occupation", values.occupation],
     ["College/Institute Name", values.collegeInstituteName],
     ["Institution Type", values.institutionType],
@@ -317,8 +317,8 @@ export default function ApplicationRegistration() {
     ["Register For", values.registerFor],
     ["Assessment Type", values.assessmentType],
     ["Payment Bank", values.paymentBank],
-    ["Payment Screenshot", paymentScreenshotName]
-  ], [values, photoName, fayadaName, paymentScreenshotName]);
+    ["Payment Screenshot", paymentScreenshotStatus]
+  ], [values, photoStatus, fayadaStatus, paymentScreenshotStatus]);
 
   async function goNext() {
     const fields = [...fieldGroups[step]];
