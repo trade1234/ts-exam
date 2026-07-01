@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const defaultProductionApiUrl = "https://exam-jgly.onrender.com/api";
+const defaultProductionApiUrl = "https://exam-iglv.onrender.com/api";
 const configuredApiUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
 const isLocalApiUrl = configuredApiUrl && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?($|\/)/.test(configuredApiUrl);
 const normalizedConfiguredApiUrl = configuredApiUrl && !configuredApiUrl.endsWith("/api") ? `${configuredApiUrl}/api` : configuredApiUrl;

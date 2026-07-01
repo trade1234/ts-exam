@@ -31,6 +31,17 @@ const defaultValues = {
   assessmentType: "New Assessment"
 };
 
+const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
+const maxUploadSize = 2 * 1024 * 1024;
+
+function validateUpload(files) {
+  const file = files?.[0];
+  if (!file) return "This image is required";
+  if (!allowedImageTypes.includes(file.type)) return "Uploaded files must be JPG, PNG, or WEBP";
+  if (file.size > maxUploadSize) return "Each uploaded image must be 2 MB or smaller";
+  return true;
+}
+
 function FieldError({ error }) {
   return error ? <div className="invalid-feedback d-block">{error.message}</div> : null;
 }
@@ -161,7 +172,7 @@ export default function ApplicationRegistration() {
     } catch (error) {
       const status = error.response?.status;
       const serverMessage = error.response?.data?.message;
-      const message = serverMessage || (error.request ? `Unable to reach the application server at ${apiBaseURL}.` : "Unable to submit application. Please try again.");
+      const message = serverMessage || (error.request ? `Unable to reach the application server at ${apiBaseURL}. Check your connection and make sure each uploaded image is 2 MB or smaller.` : "Unable to submit application. Please try again.");
       setServerError(status ? `${message} (HTTP ${status})` : message);
     }
   }
@@ -227,8 +238,8 @@ export default function ApplicationRegistration() {
                   <Field label="Address" error={errors.address} span="full"><textarea className={`form-control ${errors.address ? "is-invalid" : ""}`} rows={2} {...register("address", { required: "Address is required" })} /></Field>
                   <RadioGroup label="Physical Disability" options={["No", "Yes"]} registerProps={register("physicalDisability", { required: true })} />
                   {values.physicalDisability === "Yes" && <TextField label="Disability Description" span="half" error={errors.disabilityDescription} registerProps={register("disabilityDescription", { required: "Disability description is required" })} />}
-                  <Field label="Upload Passport Photo (3x4)" error={errors.passportPhoto} span="half"><input className={`form-control ${errors.passportPhoto ? "is-invalid" : ""}`} type="file" accept="image/png,image/jpeg,image/webp" {...register("passportPhoto", { required: "Passport photo is required" })} /></Field>
-                  <Field label="Upload FAYADA DIGITAL ID" error={errors.fayadaDigitalId} span="half"><input className={`form-control ${errors.fayadaDigitalId ? "is-invalid" : ""}`} type="file" accept="image/png,image/jpeg,image/webp" {...register("fayadaDigitalId", { required: "FAYADA DIGITAL ID image is required" })} /></Field>
+                  <Field label="Upload Passport Photo (3x4)" error={errors.passportPhoto} span="half"><input className={`form-control ${errors.passportPhoto ? "is-invalid" : ""}`} type="file" accept="image/png,image/jpeg,image/webp" {...register("passportPhoto", { validate: validateUpload })} /></Field>
+                  <Field label="Upload FAYADA DIGITAL ID" error={errors.fayadaDigitalId} span="half"><input className={`form-control ${errors.fayadaDigitalId ? "is-invalid" : ""}`} type="file" accept="image/png,image/jpeg,image/webp" {...register("fayadaDigitalId", { validate: validateUpload })} /></Field>
                 </div>
               )}
 
