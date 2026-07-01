@@ -34,9 +34,9 @@ app.use(express.json({ limit: "2mb" }));
 app.use(mongoSanitize());
 app.use(morgan("dev"));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
+app.get("/uploads/applications/:filename", serveApplicationUpload);
 app.use("/uploads", express.static(join(__dirname, "uploads")));
 app.use("/uploads", express.static(join(__dirname, "..", "uploads")));
-app.get("/uploads/applications/:filename", serveApplicationUpload);
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 app.use("/api/applications", applicationRoutes);

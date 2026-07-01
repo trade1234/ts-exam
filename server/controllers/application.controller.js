@@ -138,7 +138,11 @@ export async function createApplication(req, res, next) {
     res.status(201).json({
       message: "Application submitted successfully",
       applicationNumber: application.applicationNumber,
-      submittedAt: application.submittedAt
+      submittedAt: application.submittedAt,
+      uploads: {
+        passportPhoto: application.passportPhoto.path,
+        fayadaDigitalId: application.fayadaDigitalId.path
+      }
     });
   } catch (error) {
     if (error.name === "ZodError") {
@@ -195,20 +199,16 @@ export async function serveApplicationUpload(req, res, next) {
         { "passportPhoto.filename": filename },
         { "fayadaDigitalId.filename": filename }
       ]
-    }).select("passportPhoto fayadaDigitalId +passportPhoto.data +fayadaDigitalId.data");
+    }).select("+passportPhoto.data +fayadaDigitalId.data passportPhoto fayadaDigitalId");
 
     const file = findStoredFile(application, filename);
-    if (!file?.data) {
-      const error = new Error("Uploaded file not found. The file may have been uploaded before durable storage was enabled.");
-      error.statusCode = 404;
-      throw error;
-    }
+    if (!file?.data) return next();
 
     res.setHeader("Content-Type", file.mimetype);
     res.setHeader("Content-Length", file.size);
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-    res.send(Buffer.from(file.data));
+    return res.send(Buffer.from(file.data));
   } catch (error) {
-    next(error);
+    return next(error);
   }
 }
