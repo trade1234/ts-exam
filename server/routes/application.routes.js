@@ -4,10 +4,11 @@ import { authorize, protect } from "../middlewares/auth.js";
 import { createApplication, getApplicationByNumber, listApplications } from "../controllers/application.controller.js";
 
 const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const maxRawImageSize = 20 * 1024 * 1024;
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 2 * 1024 * 1024 },
+  limits: { fileSize: maxRawImageSize },
   fileFilter: (_req, file, callback) => {
     if (!allowedTypes.has(file.mimetype)) {
       return callback(new Error("Uploaded files must be JPG, PNG, or WEBP"));
@@ -22,7 +23,7 @@ function handleApplicationUpload(req, res, next) {
 
     error.statusCode = 400;
     if (error.code === "LIMIT_FILE_SIZE") {
-      error.message = "Each compressed image must be 2 MB or smaller.";
+      error.message = "The selected image is too large to upload. Refresh the page and try again so the browser can compress it before submitting.";
     }
     return next(error);
   });

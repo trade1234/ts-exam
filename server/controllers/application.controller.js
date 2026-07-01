@@ -3,6 +3,8 @@ import { extname } from "node:path";
 import { z } from "zod";
 import { Application } from "../models/Application.js";
 
+const maxStoredImageSize = 2 * 1024 * 1024;
+
 const applicationSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required"),
   lastName: z.string().trim().min(1, "Last name is required"),
@@ -53,6 +55,14 @@ async function generateApplicationNumber() {
   return `COC-${year}-${Date.now()}`;
 }
 
+function assertCompressedUpload(file) {
+  if (file.size <= maxStoredImageSize) return;
+
+  const error = new Error("Image upload was not compressed. Refresh the page and submit again.");
+  error.statusCode = 400;
+  throw error;
+}
+
 function buildUploadDocument(file) {
   const extension = extname(file.originalname).toLowerCase() || ".jpg";
   const filename = `${Date.now()}-${randomUUID()}${extension}`;
@@ -89,6 +99,9 @@ export async function createApplication(req, res, next) {
       error.statusCode = 400;
       throw error;
     }
+
+    assertCompressedUpload(passportPhoto);
+    assertCompressedUpload(fayadaDigitalId);
 
     const parsed = applicationSchema.parse(req.body);
     const applicationNumber = await generateApplicationNumber();

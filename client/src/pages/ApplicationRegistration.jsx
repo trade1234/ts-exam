@@ -233,7 +233,7 @@ export default function ApplicationRegistration() {
     } catch (error) {
       const status = error.response?.status;
       const serverMessage = error.response?.data?.message;
-      const message = serverMessage || error.message || (error.request ? `Unable to reach the application server at ${apiBaseURL}.` : "Unable to submit application. Please try again.");
+      const message = serverMessage || (error.request ? `Unable to reach the application server at ${apiBaseURL}. Refresh the page, then try again so the latest image compressor is loaded.` : error.message || "Unable to submit application. Please try again.");
       setServerError(status ? `${message} (HTTP ${status})` : message);
     }
   }
