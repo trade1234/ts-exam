@@ -8,6 +8,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { env } from "./config/env.js";
 import applicationRoutes from "./routes/application.routes.js";
+import { serveApplicationUpload } from "./controllers/application.controller.js";
 import authRoutes from "./routes/auth.routes.js";
 import courseRoutes from "./routes/course.routes.js";
 import examRoutes from "./routes/exam.routes.js";
@@ -35,6 +36,7 @@ app.use(morgan("dev"));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
 app.use("/uploads", express.static(join(__dirname, "uploads")));
 app.use("/uploads", express.static(join(__dirname, "..", "uploads")));
+app.get("/uploads/applications/:filename", serveApplicationUpload);
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 app.use("/api/applications", applicationRoutes);

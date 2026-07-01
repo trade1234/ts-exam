@@ -44,14 +44,16 @@ const applicationSchema = new mongoose.Schema(
       originalName: { type: String, required: true },
       path: { type: String, required: true },
       mimetype: { type: String, required: true },
-      size: { type: Number, required: true }
+      size: { type: Number, required: true },
+      data: { type: Buffer, select: false }
     },
     fayadaDigitalId: {
       filename: { type: String, required: true },
       originalName: { type: String, required: true },
       path: { type: String, required: true },
       mimetype: { type: String, required: true },
-      size: { type: Number, required: true }
+      size: { type: Number, required: true },
+      data: { type: Buffer, select: false }
     },
     agreementAccepted: { type: Boolean, required: true },
     submittedAt: { type: Date, default: Date.now }

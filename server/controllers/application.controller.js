@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import { extname } from "node:path";
 import { z } from "zod";
 import { Application } from "../models/Application.js";
 
@@ -49,6 +51,25 @@ async function generateApplicationNumber() {
     if (!exists) return applicationNumber;
   }
   return `COC-${year}-${Date.now()}`;
+}
+
+function buildUploadDocument(file) {
+  const extension = extname(file.originalname).toLowerCase() || ".jpg";
+  const filename = `${Date.now()}-${randomUUID()}${extension}`;
+
+  return {
+    filename,
+    originalName: file.originalname,
+    path: `/uploads/applications/${filename}`,
+    mimetype: file.mimetype,
+    size: file.size,
+    data: file.buffer
+  };
+}
+
+function findStoredFile(application, filename) {
+  const files = [application?.passportPhoto, application?.fayadaDigitalId].filter(Boolean);
+  return files.find((file) => file.filename === filename);
 }
 
 export async function createApplication(req, res, next) {
@@ -109,20 +130,8 @@ export async function createApplication(req, res, next) {
         registerFor: parsed.registerFor,
         assessmentType: parsed.assessmentType
       },
-      passportPhoto: {
-        filename: passportPhoto.filename,
-        originalName: passportPhoto.originalname,
-        path: `/uploads/applications/${passportPhoto.filename}`,
-        mimetype: passportPhoto.mimetype,
-        size: passportPhoto.size
-      },
-      fayadaDigitalId: {
-        filename: fayadaDigitalId.filename,
-        originalName: fayadaDigitalId.originalname,
-        path: `/uploads/applications/${fayadaDigitalId.filename}`,
-        mimetype: fayadaDigitalId.mimetype,
-        size: fayadaDigitalId.size
-      },
+      passportPhoto: buildUploadDocument(passportPhoto),
+      fayadaDigitalId: buildUploadDocument(fayadaDigitalId),
       agreementAccepted: parsed.agreementAccepted
     });
 
@@ -159,7 +168,7 @@ export async function listApplications(req, res, next) {
       ];
     }
 
-    const applications = await Application.find(query).sort({ submittedAt: -1, createdAt: -1 }).lean();
+    const applications = await Application.find(query).select("-passportPhoto.data -fayadaDigitalId.data").sort({ submittedAt: -1, createdAt: -1 }).lean();
     res.json(applications);
   } catch (error) {
     next(error);
@@ -167,7 +176,7 @@ export async function listApplications(req, res, next) {
 }
 export async function getApplicationByNumber(req, res, next) {
   try {
-    const application = await Application.findOne({ applicationNumber: req.params.applicationNumber }).lean();
+    const application = await Application.findOne({ applicationNumber: req.params.applicationNumber }).select("-passportPhoto.data -fayadaDigitalId.data").lean();
     if (!application) {
       const error = new Error("Application not found");
       error.statusCode = 404;
@@ -178,5 +187,28 @@ export async function getApplicationByNumber(req, res, next) {
     next(error);
   }
 }
+export async function serveApplicationUpload(req, res, next) {
+  try {
+    const { filename } = req.params;
+    const application = await Application.findOne({
+      $or: [
+        { "passportPhoto.filename": filename },
+        { "fayadaDigitalId.filename": filename }
+      ]
+    }).select("passportPhoto fayadaDigitalId +passportPhoto.data +fayadaDigitalId.data");
 
+    const file = findStoredFile(application, filename);
+    if (!file?.data) {
+      const error = new Error("Uploaded file not found. The file may have been uploaded before durable storage was enabled.");
+      error.statusCode = 404;
+      throw error;
+    }
 
+    res.setHeader("Content-Type", file.mimetype);
+    res.setHeader("Content-Length", file.size);
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    res.send(Buffer.from(file.data));
+  } catch (error) {
+    next(error);
+  }
+}
