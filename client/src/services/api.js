@@ -9,6 +9,23 @@ export const apiBaseURL = import.meta.env.PROD && isLocalApiUrl ? "" : normalize
 export const api = axios.create({
   baseURL: apiBaseURL
 });
+function apiOrigin() {
+  if (!apiBaseURL || apiBaseURL === "/api") return window.location.origin;
+
+  try {
+    return new URL(apiBaseURL, window.location.origin).origin;
+  } catch (_error) {
+    return window.location.origin;
+  }
+}
+
+export function assetUrl(path) {
+  if (!path) return "";
+  if (/^https?:\/\//i.test(path)) return path;
+
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${apiOrigin()}${normalizedPath}`;
+}
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("exam_token");

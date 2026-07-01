@@ -1,12 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync } from "node:fs";
-import { extname, join } from "node:path";
+import { dirname, extname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { Router } from "express";
 import multer from "multer";
 import { authorize, protect } from "../middlewares/auth.js";
 import { createApplication, getApplicationByNumber, listApplications } from "../controllers/application.controller.js";
 
-const uploadDirectory = join(process.cwd(), "uploads", "applications");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const uploadDirectory = join(__dirname, "..", "uploads", "applications");
 if (!existsSync(uploadDirectory)) {
   mkdirSync(uploadDirectory, { recursive: true });
 }

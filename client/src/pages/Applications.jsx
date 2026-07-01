@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { BriefcaseBusiness, Eye, FileCheck2, GraduationCap, Image, Printer, Search, UserRound } from "lucide-react";
 import DataTable from "../components/DataTable.jsx";
 import Modal from "../components/Modal.jsx";
-import { api } from "../services/api.js";
+import { api, assetUrl } from "../services/api.js";
 
 function fullName(person = {}) {
   return [person.firstName, person.lastName, person.grandfatherName].filter(Boolean).join(" ") || "Not provided";
@@ -76,8 +76,8 @@ function printApplication(application) {
       </div>
     </section>
   `).join("");
-  const photoUrl = application.passportPhoto?.path || "";
-  const fayadaUrl = application.fayadaDigitalId?.path || "";
+  const photoUrl = assetUrl(application.passportPhoto?.path);
+  const fayadaUrl = assetUrl(application.fayadaDigitalId?.path);
   const printWindow = window.open("", "_blank", "width=900,height=1100");
   if (!printWindow) return;
   printWindow.document.write(`<!doctype html>
@@ -294,17 +294,34 @@ export default function Applications() {
                   <Printer size={16} /> Print Application
                 </button>
                 {selected.passportPhoto?.path && (
-                  <a className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-bold text-[#0f88d2] shadow-sm transition hover:bg-blue-50 dark:bg-[#111a2b] dark:text-sky-300 dark:hover:bg-slate-800" href={selected.passportPhoto.path} target="_blank" rel="noreferrer">
+                  <a className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-bold text-[#0f88d2] shadow-sm transition hover:bg-blue-50 dark:bg-[#111a2b] dark:text-sky-300 dark:hover:bg-slate-800" href={assetUrl(selected.passportPhoto.path)} target="_blank" rel="noreferrer">
                     <Image size={16} /> View Photo
                   </a>
                 )}
                 {selected.fayadaDigitalId?.path && (
-                  <a className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-bold text-[#0f88d2] shadow-sm transition hover:bg-blue-50 dark:bg-[#111a2b] dark:text-sky-300 dark:hover:bg-slate-800" href={selected.fayadaDigitalId.path} target="_blank" rel="noreferrer">
+                  <a className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-bold text-[#0f88d2] shadow-sm transition hover:bg-blue-50 dark:bg-[#111a2b] dark:text-sky-300 dark:hover:bg-slate-800" href={assetUrl(selected.fayadaDigitalId.path)} target="_blank" rel="noreferrer">
                     <Image size={16} /> View National ID
                   </a>
                 )}
               </div>
             </div>
+
+            {(selected.passportPhoto?.path || selected.fayadaDigitalId?.path) && (
+              <section className="grid gap-4 rounded-xl border border-blue-100 bg-white p-4 dark:border-slate-800 dark:bg-[#111a2b] md:grid-cols-2">
+                {selected.passportPhoto?.path && (
+                  <div>
+                    <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">Passport Photo</p>
+                    <img className="h-64 w-full rounded-lg border border-slate-200 bg-slate-50 object-contain dark:border-slate-700 dark:bg-[#0f172a]" src={assetUrl(selected.passportPhoto.path)} alt="Passport" />
+                  </div>
+                )}
+                {selected.fayadaDigitalId?.path && (
+                  <div>
+                    <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">FAYADA / National ID</p>
+                    <img className="h-64 w-full rounded-lg border border-slate-200 bg-slate-50 object-contain dark:border-slate-700 dark:bg-[#0f172a]" src={assetUrl(selected.fayadaDigitalId.path)} alt="FAYADA National ID" />
+                  </div>
+                )}
+              </section>
+            )}
 
             <DetailSection title="Personal Information" icon={UserRound} items={[
               ["Full Name", fullName(selected.personalInformation)],
