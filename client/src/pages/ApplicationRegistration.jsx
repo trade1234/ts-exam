@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { api } from "../services/api.js";
+import { api, apiBaseURL } from "../services/api.js";
 import tessbinLogo from "../logo/download.png";
 
 const steps = [
@@ -159,8 +159,10 @@ export default function ApplicationRegistration() {
       const response = await api.post("/applications", formData);
       setSuccess(response.data);
     } catch (error) {
-      const message = error.response?.data?.message || (error.request ? "Unable to reach the application server. Please check the deployed API URL." : "Unable to submit application. Please try again.");
-      setServerError(message);
+      const status = error.response?.status;
+      const serverMessage = error.response?.data?.message;
+      const message = serverMessage || (error.request ? `Unable to reach the application server at ${apiBaseURL}.` : "Unable to submit application. Please try again.");
+      setServerError(status ? `${message} (HTTP ${status})` : message);
     }
   }
 
