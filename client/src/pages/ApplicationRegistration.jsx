@@ -126,6 +126,17 @@ async function compressImageFile(file) {
   return new File([blob], `${filename}.jpg`, { type: "image/jpeg", lastModified: Date.now() });
 }
 
+function formatValidationDetails(details) {
+  if (!Array.isArray(details) || details.length === 0) return "";
+
+  return details
+    .map((detail) => {
+      const field = Array.isArray(detail.path) && detail.path.length > 0 ? detail.path.join(".") : "Application";
+      return `${field}: ${detail.message}`;
+    })
+    .join("; ");
+}
+
 function FieldError({ error }) {
   return error ? <div className="invalid-feedback d-block">{error.message}</div> : null;
 }
@@ -263,7 +274,9 @@ export default function ApplicationRegistration() {
       setSuccess(response.data);
     } catch (error) {
       const status = error.response?.status;
-      const serverMessage = error.response?.data?.message;
+      const responseData = error.response?.data;
+      const validationDetails = formatValidationDetails(responseData?.details);
+      const serverMessage = validationDetails || responseData?.message;
       const message = serverMessage || (error.request ? `Unable to reach the application server at ${apiBaseURL}. Refresh the page, then try again so the latest image compressor is loaded.` : error.message || "Unable to submit application. Please try again.");
       setServerError(status ? `${message} (HTTP ${status})` : message);
     }

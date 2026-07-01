@@ -232,6 +232,7 @@ export async function createApplication(req, res, next) {
       const validationError = new Error("Application validation failed");
       validationError.statusCode = 400;
       validationError.details = error.errors;
+      validationError.exposeDetails = true;
       return next(validationError);
     }
     next(error);
