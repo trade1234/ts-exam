@@ -70,6 +70,7 @@ const applicationSchema = new mongoose.Schema(
       data: { type: Buffer, select: false }
     },
     agreementAccepted: { type: Boolean, required: true },
+    digitalSignature: { type: String, trim: true, default: "" },
     submittedAt: { type: Date, default: Date.now }
   },
   { timestamps: true }

@@ -61,7 +61,8 @@ const applicationSchema = z.object({
   registerFor: z.enum(["Theory", "Practical", "Both"]),
   assessmentType: z.enum(["New Assessment", "Reassessment"]),
   paymentBank: z.enum(ethiopianBanks),
-  agreementAccepted: z.coerce.boolean().refine((value) => value === true, "Confirmation is required")
+  agreementAccepted: z.coerce.boolean().refine((value) => value === true, "Confirmation is required"),
+  digitalSignature: z.string().trim().optional()
 }).superRefine((data, ctx) => {
   if (data.trainingEndMonth < data.trainingStartMonth) {
     ctx.addIssue({ code: "custom", path: ["trainingEndMonth"], message: "End month cannot be before start month" });
@@ -215,7 +216,8 @@ export async function createApplication(req, res, next) {
       passportPhoto: buildUploadDocument(passportPhoto),
       fayadaDigitalId: buildUploadDocument(fayadaDigitalId),
       paymentScreenshot: buildUploadDocument(paymentScreenshot),
-      agreementAccepted: parsed.agreementAccepted
+      agreementAccepted: parsed.agreementAccepted,
+      digitalSignature: parsed.digitalSignature || ""
     });
 
     res.status(201).json({

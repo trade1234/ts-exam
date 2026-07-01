@@ -573,10 +573,7 @@ body {
 
 @media (max-width: 767px) {
   .mobile-digital-registration {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    display: block;
     margin-top: 16px;
     padding: 14px;
     border: 1px solid #0b5cab;
@@ -585,33 +582,35 @@ body {
     color: #172b4d;
   }
 
-  .mobile-digital-registration span {
+  .digital-signature-field {
     display: block;
+    margin: 0;
+  }
+
+  .digital-signature-field span {
+    display: block;
+    margin-bottom: 8px;
     color: #5f7188;
     font-size: 0.72rem;
     font-weight: 800;
     text-transform: uppercase;
   }
 
-  .mobile-digital-registration strong {
-    display: block;
-    margin-top: 3px;
+  .digital-signature-field input {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    border: 1px solid #0b5cab;
+    border-radius: 8px;
+    background: #ffffff;
     color: #172b4d;
-    font-size: 0.95rem;
-    font-weight: 900;
+    font-size: 1rem;
+    font-weight: 700;
   }
 
-  .digital-registration-stamp {
-    flex: 0 0 auto;
-    min-width: 74px;
-    padding: 8px 10px;
-    border: 1px solid #0b5cab;
-    border-radius: 999px;
-    color: #0b5cab;
-    font-size: 0.78rem;
-    font-weight: 900;
-    text-align: center;
-    text-transform: uppercase;
+  .digital-signature-field input::placeholder {
+    color: #7a8ca3;
+    font-weight: 600;
   }
 
   .form-field-third,
