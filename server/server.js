@@ -34,6 +34,7 @@ app.use(mongoSanitize());
 app.use(morgan("dev"));
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
 app.use("/uploads", express.static(join(__dirname, "uploads")));
+app.use("/uploads", express.static(join(__dirname, "..", "uploads")));
 
 app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
 app.use("/api/applications", applicationRoutes);
