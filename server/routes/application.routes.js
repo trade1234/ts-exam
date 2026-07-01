@@ -22,7 +22,7 @@ function handleApplicationUpload(req, res, next) {
 
     error.statusCode = 400;
     if (error.code === "LIMIT_FILE_SIZE") {
-      error.message = "Each uploaded image must be 2 MB or smaller.";
+      error.message = "Each compressed image must be 2 MB or smaller.";
     }
     return next(error);
   });

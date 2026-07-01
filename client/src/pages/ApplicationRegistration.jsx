@@ -32,14 +32,71 @@ const defaultValues = {
 };
 
 const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
-const maxUploadSize = 2 * 1024 * 1024;
+const compressedUploadSize = 2 * 1024 * 1024;
+const maxImageDimension = 1600;
 
 function validateUpload(files) {
   const file = files?.[0];
   if (!file) return "This image is required";
   if (!allowedImageTypes.includes(file.type)) return "Uploaded files must be JPG, PNG, or WEBP";
-  if (file.size > maxUploadSize) return "Each uploaded image must be 2 MB or smaller";
   return true;
+}
+
+function readImage(file) {
+  return new Promise((resolve, reject) => {
+    const image = new window.Image();
+    const url = URL.createObjectURL(file);
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not read the uploaded image."));
+    };
+    image.src = url;
+  });
+}
+
+function canvasToBlob(canvas, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error("Could not compress the uploaded image."));
+    }, "image/jpeg", quality);
+  });
+}
+
+async function compressImageFile(file) {
+  const image = await readImage(file);
+  let scale = Math.min(1, maxImageDimension / Math.max(image.naturalWidth, image.naturalHeight));
+  let quality = 0.86;
+  let blob = null;
+
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, width, height);
+    context.drawImage(image, 0, 0, width, height);
+
+    blob = await canvasToBlob(canvas, quality);
+    if (blob.size <= compressedUploadSize) break;
+
+    if (quality > 0.58) quality -= 0.08;
+    else scale *= 0.82;
+  }
+
+  if (!blob || blob.size > compressedUploadSize) {
+    throw new Error("This image is too large to compress. Please choose a smaller image.");
+  }
+
+  const filename = file.name.replace(/\.[^.]+$/, "") || "upload";
+  return new File([blob], `${filename}.jpg`, { type: "image/jpeg", lastModified: Date.now() });
 }
 
 function FieldError({ error }) {
@@ -163,16 +220,20 @@ export default function ApplicationRegistration() {
       if (key === "passportPhoto" || key === "fayadaDigitalId") return;
       formData.append(key, value ?? "");
     });
-    formData.append("passportPhoto", data.passportPhoto[0]);
-    formData.append("fayadaDigitalId", data.fayadaDigitalId[0]);
-
     try {
+      const [passportPhoto, fayadaDigitalId] = await Promise.all([
+        compressImageFile(data.passportPhoto[0]),
+        compressImageFile(data.fayadaDigitalId[0])
+      ]);
+      formData.append("passportPhoto", passportPhoto);
+      formData.append("fayadaDigitalId", fayadaDigitalId);
+
       const response = await api.post("/applications", formData);
       setSuccess(response.data);
     } catch (error) {
       const status = error.response?.status;
       const serverMessage = error.response?.data?.message;
-      const message = serverMessage || (error.request ? `Unable to reach the application server at ${apiBaseURL}. Check your connection and make sure each uploaded image is 2 MB or smaller.` : "Unable to submit application. Please try again.");
+      const message = serverMessage || error.message || (error.request ? `Unable to reach the application server at ${apiBaseURL}.` : "Unable to submit application. Please try again.");
       setServerError(status ? `${message} (HTTP ${status})` : message);
     }
   }
