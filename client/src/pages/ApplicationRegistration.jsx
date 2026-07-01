@@ -54,7 +54,8 @@ const ethiopianBanks = [
   "ZamZam Bank",
   "Hijra Bank",
   "Siinqee Bank",
-  "Tsedey Bank"
+  "Tsedey Bank",
+  "Telebirr"
 ];
 
 const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];

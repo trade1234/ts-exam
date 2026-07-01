@@ -27,7 +27,8 @@ const ethiopianBanks = [
   "ZamZam Bank",
   "Hijra Bank",
   "Siinqee Bank",
-  "Tsedey Bank"
+  "Tsedey Bank",
+  "Telebirr"
 ];
 
 const applicationSchema = z.object({
