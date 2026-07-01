@@ -156,12 +156,11 @@ export default function ApplicationRegistration() {
     formData.append("fayadaDigitalId", data.fayadaDigitalId[0]);
 
     try {
-      const response = await api.post("/applications", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
+      const response = await api.post("/applications", formData);
       setSuccess(response.data);
     } catch (error) {
-      setServerError(error.response?.data?.message || "Unable to submit application. Please try again.");
+      const message = error.response?.data?.message || (error.request ? "Unable to reach the application server. Please check the deployed API URL." : "Unable to submit application. Please try again.");
+      setServerError(message);
     }
   }
 

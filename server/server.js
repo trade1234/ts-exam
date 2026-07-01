@@ -21,7 +21,7 @@ export const app = express();
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
-const allowedOrigins = new Set([env.clientUrl, "http://localhost:5173", "http://localhost:5174"]);
+const allowedOrigins = new Set([...env.clientUrls, "http://localhost:5173", "http://localhost:5174"]);
 const localDevOrigin = /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|172\.16\.\d+\.\d+):(5173|5174|5175)$/;
 app.use(cors({
   origin(origin, callback) {

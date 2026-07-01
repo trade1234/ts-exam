@@ -16,10 +16,22 @@ const upload = multer({
   }
 });
 
+function handleApplicationUpload(req, res, next) {
+  upload.fields([{ name: "passportPhoto", maxCount: 1 }, { name: "fayadaDigitalId", maxCount: 1 }])(req, res, (error) => {
+    if (!error) return next();
+
+    error.statusCode = 400;
+    if (error.code === "LIMIT_FILE_SIZE") {
+      error.message = "Each uploaded image must be 2 MB or smaller.";
+    }
+    return next(error);
+  });
+}
+
 const router = Router();
 
 router.get("/", protect, authorize("ADMIN"), listApplications);
-router.post("/", upload.fields([{ name: "passportPhoto", maxCount: 1 }, { name: "fayadaDigitalId", maxCount: 1 }]), createApplication);
+router.post("/", handleApplicationUpload, createApplication);
 router.get("/:applicationNumber", getApplicationByNumber);
 
 export default router;
