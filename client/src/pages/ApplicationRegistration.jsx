@@ -8,6 +8,7 @@ const steps = [
   "Personal Information",
   "Training Information",
   "Employment & Assessment",
+  "Payment",
   "Review & Submit"
 ];
 
@@ -17,10 +18,10 @@ const fieldGroups = [
     "woreda", "address", "phoneNumber", "maritalStatus", "physicalDisability", "passportPhoto", "fayadaDigitalId"
   ],
   [
-    "occupation", "assessmentLevel", "collegeInstituteName", "institutionType", "trainingStartYear",
-    "trainingEndYear", "trainingMode", "trainingType", "cooperativeTraining"
+    "occupation", "collegeInstituteName", "institutionType", "trainingStartMonth", "trainingEndMonth", "trainingMode", "trainingType", "cooperativeTraining"
   ],
   ["employmentStatus", "companyCategory", "registerFor", "assessmentType"],
+  ["paymentBank", "paymentScreenshot"],
   ["agreementAccepted"]
 ];
 
@@ -30,6 +31,31 @@ const defaultValues = {
   registerFor: "Both",
   assessmentType: "New Assessment"
 };
+
+const ethiopianBanks = [
+  "Commercial Bank of Ethiopia",
+  "Dashen Bank",
+  "Awash Bank",
+  "Bank of Abyssinia",
+  "Wegagen Bank",
+  "Nib International Bank",
+  "Cooperative Bank of Oromia",
+  "Oromia Bank",
+  "Zemen Bank",
+  "Bunna Bank",
+  "Abay Bank",
+  "Berhan Bank",
+  "Hibret Bank",
+  "Enat Bank",
+  "Amhara Bank",
+  "Tsehay Bank",
+  "Gadaa Bank",
+  "Ahadu Bank",
+  "ZamZam Bank",
+  "Hijra Bank",
+  "Siinqee Bank",
+  "Tsedey Bank"
+];
 
 const allowedImageTypes = ["image/jpeg", "image/png", "image/webp"];
 const compressedUploadSize = 2 * 1024 * 1024;
@@ -168,6 +194,7 @@ export default function ApplicationRegistration() {
   const values = watch();
   const photoName = values.passportPhoto?.[0]?.name;
   const fayadaName = values.fayadaDigitalId?.[0]?.name;
+  const paymentScreenshotName = values.paymentScreenshot?.[0]?.name;
 
   const reviewItems = useMemo(() => [
     ["First Name", values.firstName],
@@ -187,11 +214,10 @@ export default function ApplicationRegistration() {
     ["Passport Photo", photoName],
     ["FAYADA DIGITAL ID", fayadaName],
     ["Occupation", values.occupation],
-    ["Assessment Level", values.assessmentLevel],
     ["College/Institute Name", values.collegeInstituteName],
     ["Institution Type", values.institutionType],
-    ["Training Start Year", values.trainingStartYear],
-    ["Training End Year", values.trainingEndYear],
+    ["Training Start Month", values.trainingStartMonth],
+    ["Training End Month", values.trainingEndMonth],
     ["Training Mode", values.trainingMode],
     ["Training Type", values.trainingType],
     ["Cooperative Training", values.cooperativeTraining],
@@ -199,8 +225,10 @@ export default function ApplicationRegistration() {
     ["Company Name", values.companyName],
     ["Company Category", values.companyCategory],
     ["Register For", values.registerFor],
-    ["Assessment Type", values.assessmentType]
-  ], [values, photoName, fayadaName]);
+    ["Assessment Type", values.assessmentType],
+    ["Payment Bank", values.paymentBank],
+    ["Payment Screenshot", paymentScreenshotName]
+  ], [values, photoName, fayadaName, paymentScreenshotName]);
 
   async function goNext() {
     const fields = [...fieldGroups[step]];
@@ -217,16 +245,18 @@ export default function ApplicationRegistration() {
     setServerError("");
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
-      if (key === "passportPhoto" || key === "fayadaDigitalId") return;
+      if (key === "passportPhoto" || key === "fayadaDigitalId" || key === "paymentScreenshot") return;
       formData.append(key, value ?? "");
     });
     try {
-      const [passportPhoto, fayadaDigitalId] = await Promise.all([
+      const [passportPhoto, fayadaDigitalId, paymentScreenshot] = await Promise.all([
         compressImageFile(data.passportPhoto[0]),
-        compressImageFile(data.fayadaDigitalId[0])
+        compressImageFile(data.fayadaDigitalId[0]),
+        compressImageFile(data.paymentScreenshot[0])
       ]);
       formData.append("passportPhoto", passportPhoto);
       formData.append("fayadaDigitalId", fayadaDigitalId);
+      formData.append("paymentScreenshot", paymentScreenshot);
 
       const response = await api.post("/applications", formData);
       setSuccess(response.data);
@@ -307,11 +337,10 @@ export default function ApplicationRegistration() {
               {step === 1 && (
                 <div className="form-grid">
                   <TextField label="Occupation" span="half" error={errors.occupation} registerProps={register("occupation", { required: "Occupation is required" })} />
-                  <TextField label="Assessment Level" span="half" error={errors.assessmentLevel} registerProps={register("assessmentLevel", { required: "Assessment level is required" })} />
                   <TextField label="College/Institute Name" span="full" error={errors.collegeInstituteName} registerProps={register("collegeInstituteName", { required: "College or institute name is required" })} />
                   <SelectField label="Institution Type" error={errors.institutionType} registerProps={register("institutionType", { required: "Institution type is required" })}><option value="">Select type</option><option>Government</option><option>Private</option><option>Other</option></SelectField>
-                  <TextField label="Training Start Year" type="number" error={errors.trainingStartYear} registerProps={register("trainingStartYear", { required: "Start year is required" })} />
-                  <TextField label="Training End Year" type="number" error={errors.trainingEndYear} registerProps={register("trainingEndYear", { required: "End year is required" })} />
+                  <TextField label="Training Start Month" type="month" error={errors.trainingStartMonth} registerProps={register("trainingStartMonth", { required: "Training start month is required" })} />
+                  <TextField label="Training End Month" type="month" error={errors.trainingEndMonth} registerProps={register("trainingEndMonth", { required: "Training end month is required" })} />
                   <SelectField label="Training Mode" error={errors.trainingMode} registerProps={register("trainingMode", { required: "Training mode is required" })}><option value="">Select mode</option><option>Regular</option><option>Extension</option><option>Distance</option><option>Other</option></SelectField>
                   <SelectField label="Training Type" error={errors.trainingType} registerProps={register("trainingType", { required: "Training type is required" })}><option value="">Select type</option><option>Formal</option><option>Non-formal</option></SelectField>
                   <SelectField label="Cooperative Training" error={errors.cooperativeTraining} registerProps={register("cooperativeTraining", { required: "Cooperative training is required" })}><option value="">Select option</option><option>Large scale enterprise</option><option>Medium scale enterprise</option><option>Small scale enterprise</option><option>None</option></SelectField>
@@ -329,6 +358,16 @@ export default function ApplicationRegistration() {
               )}
 
               {step === 3 && (
+                <div className="form-grid">
+                  <SelectField label="Payment Bank" span="half" error={errors.paymentBank} registerProps={register("paymentBank", { required: "Payment bank is required" })}>
+                    <option value="">Select bank</option>
+                    {ethiopianBanks.map((bank) => <option key={bank} value={bank}>{bank}</option>)}
+                  </SelectField>
+                  <Field label="Upload Payment Screenshot" error={errors.paymentScreenshot} span="half"><input className={`form-control ${errors.paymentScreenshot ? "is-invalid" : ""}`} type="file" accept="image/png,image/jpeg,image/webp" {...register("paymentScreenshot", { validate: validateUpload })} /></Field>
+                </div>
+              )}
+
+              {step === 4 && (
                 <div>
                   <div className="review-grid">{reviewItems.map(([label, value]) => <ReviewItem key={label} label={label} value={value} />)}</div>
                   <label className="agreement-check">

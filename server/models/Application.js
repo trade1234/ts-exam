@@ -21,11 +21,10 @@ const applicationSchema = new mongoose.Schema(
     },
     trainingInformation: {
       occupation: { type: String, required: true, trim: true },
-      assessmentLevel: { type: String, required: true, trim: true },
       collegeInstituteName: { type: String, required: true, trim: true },
       institutionType: { type: String, required: true, enum: ["Government", "Private", "Other"] },
-      trainingStartYear: { type: Number, required: true },
-      trainingEndYear: { type: Number, required: true },
+      trainingStartMonth: { type: String, required: true },
+      trainingEndMonth: { type: String, required: true },
       trainingMode: { type: String, required: true, enum: ["Regular", "Extension", "Distance", "Other"] },
       trainingType: { type: String, required: true, enum: ["Formal", "Non-formal"] },
       cooperativeTraining: { type: String, required: true, enum: ["Large scale enterprise", "Medium scale enterprise", "Small scale enterprise", "None"] }
@@ -49,6 +48,18 @@ const applicationSchema = new mongoose.Schema(
       data: { type: Buffer, select: false }
     },
     fayadaDigitalId: {
+      filename: { type: String, required: true },
+      originalName: { type: String, required: true },
+      path: { type: String, required: true },
+      storage: { type: String, default: "mongodb" },
+      mimetype: { type: String, required: true },
+      size: { type: Number, required: true },
+      data: { type: Buffer, select: false }
+    },
+    paymentInformation: {
+      bankName: { type: String, required: true, trim: true }
+    },
+    paymentScreenshot: {
       filename: { type: String, required: true },
       originalName: { type: String, required: true },
       path: { type: String, required: true },

@@ -23,6 +23,7 @@ function printApplication(application) {
   const training = application.trainingInformation || {};
   const employment = application.employmentInformation || {};
   const assessment = application.assessmentInformation || {};
+  const payment = application.paymentInformation || {};
   const sections = [
     ["Personal Information", [
       ["Full Name", fullName(personal)],
@@ -40,11 +41,10 @@ function printApplication(application) {
     ]],
     ["Training Information", [
       ["Occupation", training.occupation],
-      ["Assessment Level", training.assessmentLevel],
       ["College/Institute", training.collegeInstituteName],
       ["Institution Type", training.institutionType],
-      ["Training Start Year", training.trainingStartYear],
-      ["Training End Year", training.trainingEndYear],
+      ["Training Start Month", training.trainingStartMonth],
+      ["Training End Month", training.trainingEndMonth],
       ["Training Mode", training.trainingMode],
       ["Training Type", training.trainingType],
       ["Cooperative Training", training.cooperativeTraining]
@@ -60,6 +60,10 @@ function printApplication(application) {
       ["Agreement", application.agreementAccepted ? "Confirmed" : "Not confirmed"],
       ["Passport Photo", application.passportPhoto?.originalName],
       ["FAYADA / National ID", application.fayadaDigitalId?.originalName]
+    ]],
+    ["Payment Information", [
+      ["Payment Bank", payment.bankName],
+      ["Payment Screenshot", application.paymentScreenshot?.originalName]
     ]]
   ];
 
@@ -78,6 +82,7 @@ function printApplication(application) {
   `).join("");
   const photoUrl = assetUrl(application.passportPhoto?.path);
   const fayadaUrl = assetUrl(application.fayadaDigitalId?.path);
+  const paymentUrl = assetUrl(application.paymentScreenshot?.path);
   const printWindow = window.open("", "_blank", "width=900,height=1100");
   if (!printWindow) return;
   printWindow.document.write(`<!doctype html>
@@ -126,6 +131,7 @@ function printApplication(application) {
     <div class="attachments">
       ${photoUrl ? `<div class="attachment-card"><span>Passport Photo</span><img src="${escapeHtml(photoUrl)}" alt="Passport photo" /></div>` : ""}
       ${fayadaUrl ? `<div class="attachment-card national-id-card"><span>FAYADA / National ID</span><img src="${escapeHtml(fayadaUrl)}" alt="FAYADA National ID" /></div>` : ""}
+      ${paymentUrl ? `<div class="attachment-card national-id-card"><span>Payment Screenshot</span><img src="${escapeHtml(paymentUrl)}" alt="Payment screenshot" /></div>` : ""}
     </div>
   </section>
   <div class="files">
@@ -241,7 +247,6 @@ export default function Applications() {
       )
     },
     { key: "occupation", label: "Occupation", render: (row) => row.trainingInformation?.occupation || "Not provided" },
-    { key: "level", label: "Level", render: (row) => row.trainingInformation?.assessmentLevel || "Not provided" },
     {
       key: "registerFor",
       label: "Register For",
@@ -331,7 +336,7 @@ export default function Applications() {
               </div>
             </div>
 
-            {(selected.passportPhoto?.path || selected.fayadaDigitalId?.path) && (
+            {(selected.passportPhoto?.path || selected.fayadaDigitalId?.path || selected.paymentScreenshot?.path) && (
               <section className="grid gap-4 rounded-xl border border-blue-100 bg-white p-4 dark:border-slate-800 dark:bg-[#111a2b] md:grid-cols-2">
                 {selected.passportPhoto?.path && (
                   <div>
@@ -343,6 +348,12 @@ export default function Applications() {
                   <div>
                     <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">FAYADA / National ID</p>
                     <img className="h-64 w-full rounded-lg border border-slate-200 bg-slate-50 object-contain dark:border-slate-700 dark:bg-[#0f172a]" src={assetUrl(selected.fayadaDigitalId.path)} alt="FAYADA National ID" />
+                  </div>
+                )}
+                {selected.paymentScreenshot?.path && (
+                  <div>
+                    <p className="mb-2 text-[11px] font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">Payment Screenshot</p>
+                    <img className="h-64 w-full rounded-lg border border-slate-200 bg-slate-50 object-contain dark:border-slate-700 dark:bg-[#0f172a]" src={assetUrl(selected.paymentScreenshot.path)} alt="Payment screenshot" />
                   </div>
                 )}
               </section>
@@ -365,11 +376,10 @@ export default function Applications() {
 
             <DetailSection title="Training Information" icon={GraduationCap} items={[
               ["Occupation", selected.trainingInformation?.occupation],
-              ["Assessment Level", selected.trainingInformation?.assessmentLevel],
               ["College/Institute", selected.trainingInformation?.collegeInstituteName],
               ["Institution Type", selected.trainingInformation?.institutionType],
-              ["Training Start Year", selected.trainingInformation?.trainingStartYear],
-              ["Training End Year", selected.trainingInformation?.trainingEndYear],
+              ["Training Start Month", selected.trainingInformation?.trainingStartMonth],
+              ["Training End Month", selected.trainingInformation?.trainingEndMonth],
               ["Training Mode", selected.trainingInformation?.trainingMode],
               ["Training Type", selected.trainingInformation?.trainingType],
               ["Cooperative Training", selected.trainingInformation?.cooperativeTraining]
@@ -387,6 +397,11 @@ export default function Applications() {
               ["Agreement", selected.agreementAccepted ? "Confirmed" : "Not confirmed"],
               ["Photo File", selected.passportPhoto?.originalName],
               ["FAYADA / National ID File", selected.fayadaDigitalId?.originalName]
+            ]} />
+
+            <DetailSection title="Payment Information" icon={FileCheck2} items={[
+              ["Payment Bank", selected.paymentInformation?.bankName],
+              ["Payment Screenshot", selected.paymentScreenshot?.originalName]
             ]} />
           </div>
         </Modal>

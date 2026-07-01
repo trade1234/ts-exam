@@ -18,7 +18,7 @@ const upload = multer({
 });
 
 function handleApplicationUpload(req, res, next) {
-  upload.fields([{ name: "passportPhoto", maxCount: 1 }, { name: "fayadaDigitalId", maxCount: 1 }])(req, res, (error) => {
+  upload.fields([{ name: "passportPhoto", maxCount: 1 }, { name: "fayadaDigitalId", maxCount: 1 }, { name: "paymentScreenshot", maxCount: 1 }])(req, res, (error) => {
     if (!error) return next();
 
     error.statusCode = 400;

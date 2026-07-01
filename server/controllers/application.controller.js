@@ -5,6 +5,31 @@ import { Application } from "../models/Application.js";
 
 const maxStoredImageSize = 2 * 1024 * 1024;
 
+const ethiopianBanks = [
+  "Commercial Bank of Ethiopia",
+  "Dashen Bank",
+  "Awash Bank",
+  "Bank of Abyssinia",
+  "Wegagen Bank",
+  "Nib International Bank",
+  "Cooperative Bank of Oromia",
+  "Oromia Bank",
+  "Zemen Bank",
+  "Bunna Bank",
+  "Abay Bank",
+  "Berhan Bank",
+  "Hibret Bank",
+  "Enat Bank",
+  "Amhara Bank",
+  "Tsehay Bank",
+  "Gadaa Bank",
+  "Ahadu Bank",
+  "ZamZam Bank",
+  "Hijra Bank",
+  "Siinqee Bank",
+  "Tsedey Bank"
+];
+
 const applicationSchema = z.object({
   firstName: z.string().trim().min(1, "First name is required"),
   lastName: z.string().trim().min(1, "Last name is required"),
@@ -21,11 +46,10 @@ const applicationSchema = z.object({
   physicalDisability: z.enum(["Yes", "No"]),
   disabilityDescription: z.string().trim().optional(),
   occupation: z.string().trim().min(1, "Occupation is required"),
-  assessmentLevel: z.string().trim().min(1, "Assessment level is required"),
   collegeInstituteName: z.string().trim().min(1, "College or institute name is required"),
   institutionType: z.enum(["Government", "Private", "Other"]),
-  trainingStartYear: z.coerce.number().int().min(1950).max(2100),
-  trainingEndYear: z.coerce.number().int().min(1950).max(2100),
+  trainingStartMonth: z.string().regex(/^\d{4}-\d{2}$/, "Training start month is required"),
+  trainingEndMonth: z.string().regex(/^\d{4}-\d{2}$/, "Training end month is required"),
   trainingMode: z.enum(["Regular", "Extension", "Distance", "Other"]),
   trainingType: z.enum(["Formal", "Non-formal"]),
   cooperativeTraining: z.enum(["Large scale enterprise", "Medium scale enterprise", "Small scale enterprise", "None"]),
@@ -34,13 +58,14 @@ const applicationSchema = z.object({
   companyCategory: z.enum(["Micro and small scale enterprise", "Medium and large enterprise", "Not applicable"]),
   registerFor: z.enum(["Theory", "Practical", "Both"]),
   assessmentType: z.enum(["New Assessment", "Reassessment"]),
+  paymentBank: z.enum(ethiopianBanks),
   agreementAccepted: z.coerce.boolean().refine((value) => value === true, "Confirmation is required")
 }).superRefine((data, ctx) => {
+  if (data.trainingEndMonth < data.trainingStartMonth) {
+    ctx.addIssue({ code: "custom", path: ["trainingEndMonth"], message: "End month cannot be before start month" });
+  }
   if (data.physicalDisability === "Yes" && !data.disabilityDescription?.trim()) {
     ctx.addIssue({ code: "custom", path: ["disabilityDescription"], message: "Please describe the disability" });
-  }
-  if (data.trainingEndYear < data.trainingStartYear) {
-    ctx.addIssue({ code: "custom", path: ["trainingEndYear"], message: "End year cannot be before start year" });
   }
 });
 
@@ -95,7 +120,8 @@ function applicationForResponse(application) {
   return {
     ...application,
     passportPhoto: uploadForResponse(application.passportPhoto),
-    fayadaDigitalId: uploadForResponse(application.fayadaDigitalId)
+    fayadaDigitalId: uploadForResponse(application.fayadaDigitalId),
+    paymentScreenshot: uploadForResponse(application.paymentScreenshot)
   };
 }
 
@@ -108,7 +134,7 @@ function storedBuffer(data) {
 }
 
 function findStoredFile(application, filename) {
-  const files = [application?.passportPhoto, application?.fayadaDigitalId].filter(Boolean);
+  const files = [application?.passportPhoto, application?.fayadaDigitalId, application?.paymentScreenshot].filter(Boolean);
   return files.find((file) => file.filename === filename);
 }
 
@@ -116,6 +142,7 @@ export async function createApplication(req, res, next) {
   try {
     const passportPhoto = req.files?.passportPhoto?.[0];
     const fayadaDigitalId = req.files?.fayadaDigitalId?.[0];
+    const paymentScreenshot = req.files?.paymentScreenshot?.[0];
 
     if (!passportPhoto) {
       const error = new Error("Passport photo is required");
@@ -129,8 +156,15 @@ export async function createApplication(req, res, next) {
       throw error;
     }
 
+    if (!paymentScreenshot) {
+      const error = new Error("Payment screenshot is required");
+      error.statusCode = 400;
+      throw error;
+    }
+
     assertCompressedUpload(passportPhoto);
     assertCompressedUpload(fayadaDigitalId);
+    assertCompressedUpload(paymentScreenshot);
 
     const parsed = applicationSchema.parse(req.body);
     const applicationNumber = await generateApplicationNumber();
@@ -155,11 +189,10 @@ export async function createApplication(req, res, next) {
       },
       trainingInformation: {
         occupation: parsed.occupation,
-        assessmentLevel: parsed.assessmentLevel,
         collegeInstituteName: parsed.collegeInstituteName,
         institutionType: parsed.institutionType,
-        trainingStartYear: parsed.trainingStartYear,
-        trainingEndYear: parsed.trainingEndYear,
+        trainingStartMonth: parsed.trainingStartMonth,
+        trainingEndMonth: parsed.trainingEndMonth,
         trainingMode: parsed.trainingMode,
         trainingType: parsed.trainingType,
         cooperativeTraining: parsed.cooperativeTraining
@@ -173,8 +206,12 @@ export async function createApplication(req, res, next) {
         registerFor: parsed.registerFor,
         assessmentType: parsed.assessmentType
       },
+      paymentInformation: {
+        bankName: parsed.paymentBank
+      },
       passportPhoto: buildUploadDocument(passportPhoto),
       fayadaDigitalId: buildUploadDocument(fayadaDigitalId),
+      paymentScreenshot: buildUploadDocument(paymentScreenshot),
       agreementAccepted: parsed.agreementAccepted
     });
 
@@ -185,6 +222,7 @@ export async function createApplication(req, res, next) {
       uploads: {
         passportPhoto: uploadPath(application.passportPhoto.filename),
         fayadaDigitalId: uploadPath(application.fayadaDigitalId.filename),
+        paymentScreenshot: uploadPath(application.paymentScreenshot.filename),
         storage: "mongodb"
       }
     });
@@ -216,7 +254,7 @@ export async function listApplications(req, res, next) {
       ];
     }
 
-    const applications = await Application.find(query).select("-passportPhoto.data -fayadaDigitalId.data").sort({ submittedAt: -1, createdAt: -1 }).lean();
+    const applications = await Application.find(query).select("-passportPhoto.data -fayadaDigitalId.data -paymentScreenshot.data").sort({ submittedAt: -1, createdAt: -1 }).lean();
     res.json(applications.map(applicationForResponse));
   } catch (error) {
     next(error);
@@ -239,7 +277,7 @@ export async function deleteApplication(req, res, next) {
 }
 export async function getApplicationByNumber(req, res, next) {
   try {
-    const application = await Application.findOne({ applicationNumber: req.params.applicationNumber }).select("-passportPhoto.data -fayadaDigitalId.data").lean();
+    const application = await Application.findOne({ applicationNumber: req.params.applicationNumber }).select("-passportPhoto.data -fayadaDigitalId.data -paymentScreenshot.data").lean();
     if (!application) {
       const error = new Error("Application not found");
       error.statusCode = 404;
@@ -256,9 +294,10 @@ export async function serveApplicationUpload(req, res, next) {
     const application = await Application.findOne({
       $or: [
         { "passportPhoto.filename": filename },
-        { "fayadaDigitalId.filename": filename }
+        { "fayadaDigitalId.filename": filename },
+        { "paymentScreenshot.filename": filename }
       ]
-    }).select("+passportPhoto.data +fayadaDigitalId.data");
+    }).select("+passportPhoto.data +fayadaDigitalId.data +paymentScreenshot.data");
 
     const file = findStoredFile(application, filename);
     const buffer = storedBuffer(file?.data);
