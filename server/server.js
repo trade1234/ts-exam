@@ -21,11 +21,23 @@ export const app = express();
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
-const allowedOrigins = new Set([...env.clientUrls, "https://examfrontend-f35t.onrender.com", "http://localhost:5173", "http://localhost:5174"]);
+
+const allowedOrigins = new Set([
+  ...env.clientUrls,
+  "https://examfrontend-f35t.onrender.com",
+  "http://localhost:5173",
+  "http://localhost:5174"
+]);
 const localDevOrigin = /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|172\.16\.\d+\.\d+):(5173|5174|5175)$/;
+const renderFrontendOrigin = /^https:\/\/[a-z0-9-]+\.onrender\.com$/;
+
+function isAllowedOrigin(origin) {
+  return allowedOrigins.has(origin) || localDevOrigin.test(origin) || renderFrontendOrigin.test(origin);
+}
+
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.has(origin) || localDevOrigin.test(origin)) return callback(null, true);
+    if (!origin || isAllowedOrigin(origin)) return callback(null, true);
     return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
   credentials: true
