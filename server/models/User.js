@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema(
     batchYear: { type: Number, trim: true },
     trainingTaken: { type: String, trim: true, default: "" },
     password: { type: String, required: true, minlength: 6, select: false },
+    generatedPassword: { type: String, select: false },
     role: { type: String, enum: ["ADMIN", "STUDENT"], default: "STUDENT" },
     isActive: { type: Boolean, default: true },
     currentSessionId: { type: String, default: "" },
@@ -30,4 +31,3 @@ userSchema.methods.comparePassword = function comparePassword(password) {
 };
 
 export const User = mongoose.model("User", userSchema);
-

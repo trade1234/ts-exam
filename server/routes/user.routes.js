@@ -10,8 +10,7 @@ const createStudentSchema = z.object({
   body: z.object({
     name: z.string().min(2, "Full name is required"),
     batchYear: z.number().int().min(2000).max(2099),
-    trainingTaken: z.string().min(1, "Training is required"),
-    password: z.string().min(6, "Password must be at least 6 characters")
+    trainingTaken: z.string().min(1, "Training is required")
   })
 });
 
@@ -21,7 +20,7 @@ const updateStudentSchema = z.object({
     batchYear: z.number().int().min(2000).max(2099),
     trainingTaken: z.string().min(1, "Training is required"),
     isActive: z.boolean().optional(),
-    password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal(""))
+    generatePassword: z.boolean().optional()
   })
 });
 router.get("/students", protect, authorize("ADMIN"), listStudents);
@@ -34,5 +33,3 @@ router.get("/dashboard/student", protect, authorize("STUDENT"), studentDashboard
 router.patch("/change-password", protect, validate(z.object({ body: z.object({ currentPassword: z.string().min(1), newPassword: z.string().min(6) }) })), changePassword);
 
 export default router;
-
-

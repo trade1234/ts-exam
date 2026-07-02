@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Search, UserPlus, Copy, Check, Eye, EyeOff, Pencil } from "lucide-react";
+import { Search, UserPlus, Copy, Check, KeyRound, Pencil } from "lucide-react";
 import DataTable from "../components/DataTable.jsx";
 import Modal from "../components/Modal.jsx";
 import { api } from "../services/api.js";
@@ -9,7 +9,7 @@ export default function Students() {
   const [search, setSearch] = useState("");
   const [modal, setModal] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
-  const [form, setForm] = useState({ name: "", batchYear: new Date().getFullYear(), trainingTaken: "", password: "" });
+  const [form, setForm] = useState({ name: "", batchYear: new Date().getFullYear(), trainingTaken: "", generatePassword: false });
 
   const trainingOptions = [
     "Coffee Cupping",
@@ -18,8 +18,7 @@ export default function Students() {
   ];
   const [loading, setLoading] = useState(false);
   const [created, setCreated] = useState(null);
-  const [copied, setCopied] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [copied, setCopied] = useState("");
   const [error, setError] = useState("");
 
   function load() {
@@ -32,12 +31,16 @@ export default function Students() {
     load();
   }
 
+  function resetForm() {
+    setForm({ name: "", batchYear: new Date().getFullYear(), trainingTaken: "", generatePassword: false });
+  }
+
   function openModal() {
     setEditingStudent(null);
-    setForm({ name: "", batchYear: new Date().getFullYear(), trainingTaken: "", password: "" });
+    resetForm();
     setCreated(null);
     setError("");
-    setShowPassword(false);
+    setCopied("");
     setModal(true);
   }
 
@@ -46,24 +49,25 @@ export default function Students() {
     setEditingStudent(null);
     setCreated(null);
     setError("");
+    setCopied("");
     if (created) load();
   }
 
-  
   function openEdit(row) {
     setEditingStudent(row);
     setForm({
       name: row.name || "",
       batchYear: row.batchYear || new Date().getFullYear(),
       trainingTaken: row.trainingTaken || "",
-      password: "",
-      isActive: Boolean(row.isActive)
+      isActive: Boolean(row.isActive),
+      generatePassword: false
     });
     setCreated(null);
     setError("");
-    setShowPassword(false);
+    setCopied("");
     setModal(true);
   }
+
   async function save(e) {
     e.preventDefault();
     setLoading(true);
@@ -75,7 +79,7 @@ export default function Students() {
           batchYear: Number(form.batchYear),
           trainingTaken: form.trainingTaken,
           isActive: Boolean(form.isActive),
-          password: form.password
+          generatePassword: Boolean(form.generatePassword)
         });
         setModal(false);
         setEditingStudent(null);
@@ -86,8 +90,7 @@ export default function Students() {
       const res = await api.post("/users/students", {
         name: form.name,
         batchYear: Number(form.batchYear),
-        trainingTaken: form.trainingTaken,
-        password: form.password
+        trainingTaken: form.trainingTaken
       });
       setCreated(res.data);
     } catch (err) {
@@ -97,14 +100,13 @@ export default function Students() {
     }
   }
 
-  function copyId() {
-    if (!created) return;
-    navigator.clipboard.writeText(created.enrollmentNumber);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  function copyText(value, key) {
+    if (!value) return;
+    navigator.clipboard.writeText(value);
+    setCopied(key);
+    setTimeout(() => setCopied(""), 2000);
   }
 
-  // Generate batch year options from 2015 to current year
   const currentYear = new Date().getFullYear();
   const batchYears = [];
   for (let y = currentYear; y >= 2015; y--) {
@@ -130,10 +132,22 @@ export default function Students() {
         { key: "name", label: "Full Name" },
         { key: "enrollmentNumber", label: "Student ID", render: (row) => (
           <span className="font-mono text-xs font-semibold tracking-wide text-blue-700 dark:text-sky-400">
-            {row.enrollmentNumber || "—"}
+            {row.enrollmentNumber || "--"}
           </span>
         )},
-        { key: "batchYear", label: "Batch Year", render: (row) => row.batchYear || "—" },
+        { key: "generatedPassword", label: "Password", render: (row) => row.generatedPassword ? (
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="break-all font-mono text-xs font-semibold text-slate-700 dark:text-slate-200">{row.generatedPassword}</span>
+            <button
+              className="rounded-md border border-slate-200 p-1.5 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800 dark:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+              onClick={() => copyText(row.generatedPassword, `password-${row._id}`)}
+              title="Copy password"
+            >
+              {copied === `password-${row._id}` ? <Check size={14} /> : <Copy size={14} />}
+            </button>
+          </div>
+        ) : "Not available" },
+        { key: "batchYear", label: "Batch Year", render: (row) => row.batchYear || "--" },
         { key: "trainingTaken", label: "Training Taken", render: (row) => row.trainingTaken || "Not assigned" },
         { key: "isActive", label: "Status", render: (row) => (
           <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${row.isActive ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"}`}>
@@ -159,10 +173,10 @@ export default function Students() {
                 </div>
               )}
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Full Name <span className="text-red-500">*</span></label>
+                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Full Name including Grandfather Name <span className="text-red-500">*</span></label>
                 <input
                   className="input"
-                  placeholder="Enter student's full name"
+                  placeholder="Enter full name including grandfather name"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   required
@@ -196,38 +210,33 @@ export default function Students() {
                   ))}
                 </select>
               </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">{editingStudent ? "New Password" : "Password"} {!editingStudent && <span className="text-red-500">*</span>}</label>
-                <div className="relative">
-                  <input
-                    className="input pr-10"
-                    type={showPassword ? "text" : "password"}
-                    placeholder={editingStudent ? "Leave blank to keep current password" : "Set password (min 6 characters)"}
-                    value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    required={!editingStudent}
-                    minLength={form.password ? 6 : undefined}
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-2.5 text-slate-400 transition hover:text-slate-600 dark:hover:text-slate-200"
-                    onClick={() => setShowPassword(!showPassword)}
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
+              {!editingStudent && (
+                <div className="flex items-start gap-3 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-slate-700 dark:bg-slate-800 dark:text-sky-300">
+                  <KeyRound className="mt-0.5 shrink-0" size={16} />
+                  <span>A secure unique password will be generated automatically after the student is created.</span>
                 </div>
-              </div>
+              )}
               {editingStudent && (
-                <label className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-800 dark:bg-[#0f172a] dark:text-slate-200">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 accent-[#0f88d2]"
-                    checked={Boolean(form.isActive)}
-                    onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-                  />
-                  Account active
-                </label>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-800 dark:bg-[#0f172a] dark:text-slate-200">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-[#0f88d2]"
+                      checked={Boolean(form.generatePassword)}
+                      onChange={(e) => setForm({ ...form, generatePassword: e.target.checked })}
+                    />
+                    Generate new secure password
+                  </label>
+                  <label className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 dark:border-slate-800 dark:bg-[#0f172a] dark:text-slate-200">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 accent-[#0f88d2]"
+                      checked={Boolean(form.isActive)}
+                      onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                    />
+                    Account active
+                  </label>
+                </div>
               )}
               <div className="grid gap-3 pt-2 sm:flex sm:items-center">
                 <button className="btn-primary" disabled={loading}>
@@ -261,10 +270,23 @@ export default function Students() {
                       <p className="break-all font-mono text-base font-bold tracking-wider sm:text-lg text-blue-700 dark:text-sky-400">{created.enrollmentNumber}</p>
                       <button
                         className="rounded-md border border-blue-200 bg-white p-1.5 text-blue-600 transition hover:bg-blue-50 dark:border-slate-700 dark:bg-[#111a2b] dark:text-sky-400 dark:hover:bg-slate-800"
-                        onClick={copyId}
+                        onClick={() => copyText(created.enrollmentNumber, "created-id")}
                         title="Copy Student ID"
                       >
-                        {copied ? <Check size={14} /> : <Copy size={14} />}
+                        {copied === "created-id" ? <Check size={14} /> : <Copy size={14} />}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Generated Password</span>
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <p className="break-all font-mono text-base font-bold tracking-wider sm:text-lg text-blue-700 dark:text-sky-400">{created.generatedPassword}</p>
+                      <button
+                        className="rounded-md border border-blue-200 bg-white p-1.5 text-blue-600 transition hover:bg-blue-50 dark:border-slate-700 dark:bg-[#111a2b] dark:text-sky-400 dark:hover:bg-slate-800"
+                        onClick={() => copyText(created.generatedPassword, "created-password")}
+                        title="Copy password"
+                      >
+                        {copied === "created-password" ? <Check size={14} /> : <Copy size={14} />}
                       </button>
                     </div>
                   </div>
@@ -279,10 +301,10 @@ export default function Students() {
                 </div>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                The student can log in using their <strong>Student ID</strong> ({created.enrollmentNumber}) and the password you set.
+                The student can log in using their <strong>Student ID</strong> ({created.enrollmentNumber}) and the generated password shown above.
               </p>
               <div className="grid gap-3 sm:flex">
-                <button className="btn-primary" onClick={() => { setCreated(null); setForm({ name: "", batchYear: new Date().getFullYear(), trainingTaken: "", password: "" }); setShowPassword(false); }}>
+                <button className="btn-primary" onClick={() => { setCreated(null); resetForm(); setCopied(""); }}>
                   <UserPlus size={16} /> Add Another
                 </button>
                 <button className="btn-secondary" onClick={closeModal}>Close</button>
@@ -294,7 +316,3 @@ export default function Students() {
     </div>
   );
 }
-
-
-
-

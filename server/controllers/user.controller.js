@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { User } from "../models/User.js";
 import { ExamAttempt } from "../models/ExamAttempt.js";
 import { Exam } from "../models/Exam.js";
@@ -5,9 +6,26 @@ import { Course } from "../models/Course.js";
 import { ActivityLog } from "../models/ActivityLog.js";
 import { logActivity } from "../utils/logger.js";
 
+function generateStudentPassword() {
+  return crypto.randomBytes(9).toString("base64url");
+}
+
+async function uniqueStudentPassword(studentId) {
+  let password = generateStudentPassword();
+  const query = { generatedPassword: password };
+  if (studentId) query._id = { $ne: studentId };
+
+  while (await User.exists(query)) {
+    password = generateStudentPassword();
+    query.generatedPassword = password;
+  }
+
+  return password;
+}
+
 export async function createStudent(req, res, next) {
   try {
-    const { name, batchYear, trainingTaken, password } = req.body;
+    const { name, batchYear, trainingTaken } = req.body;
 
     // Check for unique numeric ID within this batch year
     const prefix = `TSE/`;
@@ -30,6 +48,7 @@ export async function createStudent(req, res, next) {
 
     // Generate a simple email from enrollment number (for login purposes)
     const email = `${enrollmentNumber.replace(/\//g, "").toLowerCase()}@student.tse.edu`;
+    const password = await uniqueStudentPassword();
 
     const student = await User.create({
       name,
@@ -38,6 +57,7 @@ export async function createStudent(req, res, next) {
       batchYear,
       trainingTaken,
       password,
+      generatedPassword: password,
       role: "STUDENT"
     });
 
@@ -63,7 +83,7 @@ export async function listStudents(req, res, next) {
         { enrollmentNumber: new RegExp(search, "i") }
       ];
     }
-    const students = await User.find(query).select("-password").sort({ createdAt: -1 });
+    const students = await User.find(query).select("-password +generatedPassword").sort({ createdAt: -1 });
     res.json(students);
   } catch (error) {
     next(error);
@@ -72,14 +92,18 @@ export async function listStudents(req, res, next) {
 
 export async function updateStudent(req, res, next) {
   try {
-    const student = await User.findOne({ _id: req.params.id, role: "STUDENT" }).select("+password");
+    const student = await User.findOne({ _id: req.params.id, role: "STUDENT" }).select("+password +generatedPassword");
     if (!student) return res.status(404).json({ message: "Student not found" });
 
     student.name = req.body.name;
     student.batchYear = req.body.batchYear;
     student.trainingTaken = req.body.trainingTaken;
     if (typeof req.body.isActive === "boolean") student.isActive = req.body.isActive;
-    if (req.body.password) student.password = req.body.password;
+    if (req.body.generatePassword) {
+      const password = await uniqueStudentPassword(student._id);
+      student.password = password;
+      student.generatedPassword = password;
+    }
 
     await student.save();
     const sanitized = student.toObject();
@@ -95,7 +119,7 @@ export async function setStudentActive(req, res, next) {
       { _id: req.params.id, role: "STUDENT" },
       { isActive: req.body.isActive },
       { new: true }
-    ).select("-password");
+    ).select("-password +generatedPassword");
     if (!user) return res.status(404).json({ message: "Student not found" });
     res.json(user);
   } catch (error) {
@@ -126,6 +150,7 @@ export async function changePassword(req, res, next) {
       return res.status(400).json({ message: "Current password is incorrect" });
     }
     user.password = req.body.newPassword;
+    if (user.role === "STUDENT") user.generatedPassword = req.body.newPassword;
     await user.save();
     await logActivity(req, "PASSWORD_CHANGE", "Changed password successfully");
     res.json({ message: "Password changed" });
@@ -158,5 +183,3 @@ export async function listActivityLogs(req, res, next) {
     next(error);
   }
 }
-
-
