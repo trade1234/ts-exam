@@ -15,6 +15,11 @@ function isCorrectAnswer(question, selectedAnswer) {
   }
   return selectedAnswer === question.correctAnswer;
 }
+function calculateEndDate(startDate, durationMinutes, extraTimeMinutes = 0) {
+  const totalMinutes = Number(durationMinutes) + Number(extraTimeMinutes || 0);
+  return new Date(new Date(startDate).getTime() + totalMinutes * 60000);
+}
+
 export const examSchema = z.object({
   body: z.object({
     courseId: z.string().min(1),
@@ -25,11 +30,11 @@ export const examSchema = z.object({
     totalMarks: z.coerce.number().min(1),
     passPercentage: z.coerce.number().min(0).max(100),
     startDate: z.coerce.date(),
-    endDate: z.coerce.date()
-  }).refine((exam) => exam.endDate > exam.startDate, {
-    path: ["endDate"],
-    message: "End time must be after start time"
-  })
+    endDate: z.coerce.date().optional()
+  }).transform((exam) => ({
+    ...exam,
+    endDate: calculateEndDate(exam.startDate, exam.durationMinutes, exam.extraTimeMinutes)
+  }))
 });
 
 export async function listExams(req, res, next) {

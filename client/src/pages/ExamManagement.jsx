@@ -4,7 +4,7 @@ import DataTable from "../components/DataTable.jsx";
 import Modal from "../components/Modal.jsx";
 import { api } from "../services/api.js";
 
-const blankExam = { courseId: "", title: "", description: "", durationMinutes: 30, extraTimeMinutes: 0, totalMarks: 10, passPercentage: 50, startDate: "", endDate: "" };
+const blankExam = { courseId: "", title: "", description: "", durationMinutes: 30, extraTimeMinutes: 0, totalMarks: 10, passPercentage: 50, startDate: "" };
 const blankQuestion = { examId: "", questionType: "MULTIPLE_CHOICE", questionText: "", optionA: "", optionB: "", optionC: "", optionD: "", correctAnswer: "A", marks: 1, order: 0 };
 const blankExtraTime = { examId: "", minutes: 5 };
 const allQuestionsExamId = "ALL";
@@ -32,10 +32,16 @@ function toLocalDateTimeInput(date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+function calculatedExamEndDate(exam) {
+  if (!exam?.startDate) return null;
+  const totalMinutes = (Number(exam.durationMinutes) || 0) + (Number(exam.extraTimeMinutes) || 0);
+  if (totalMinutes <= 0) return null;
+  return new Date(new Date(exam.startDate).getTime() + totalMinutes * 60000);
+}
+
 function defaultExamForm() {
   const startDate = new Date(Date.now() + 5 * 60000);
-  const endDate = new Date(startDate.getTime() + 30 * 60000);
-  return { ...blankExam, startDate: toLocalDateTimeInput(startDate), endDate: toLocalDateTimeInput(endDate) };
+  return { ...blankExam, startDate: toLocalDateTimeInput(startDate) };
 }
 
 function apiErrorMessage(error) {
@@ -164,7 +170,6 @@ function toExamPayload(exam, overrides = {}) {
     totalMarks: exam.totalMarks,
     passPercentage: exam.passPercentage,
     startDate: exam.startDate,
-    endDate: exam.endDate,
     ...overrides
   };
 }
@@ -281,8 +286,7 @@ export default function ExamManagement() {
     setEditingExamId(exam._id);
     setExamForm({
       ...toExamPayload(exam),
-      startDate: toLocalDateTimeInput(new Date(exam.startDate)),
-      endDate: toLocalDateTimeInput(new Date(exam.endDate))
+      startDate: toLocalDateTimeInput(new Date(exam.startDate))
     });
     setModal("exam");
   }
@@ -416,12 +420,10 @@ export default function ExamManagement() {
     const minutes = Number(extraTimeForm.minutes) || 0;
     if (!exam || minutes <= 0) return;
 
-    const endDate = new Date(new Date(exam.endDate).getTime() + minutes * 60000);
     setSavingId(exam._id);
     try {
       await api.put(`/exams/${exam._id}`, toExamPayload(exam, {
-        extraTimeMinutes: (Number(exam.extraTimeMinutes) || 0) + minutes,
-        endDate: endDate.toISOString()
+        extraTimeMinutes: (Number(exam.extraTimeMinutes) || 0) + minutes
       }));
       setModal(null);
       setExtraTimeForm({ examId: exam._id, minutes: 5 });
@@ -433,16 +435,11 @@ export default function ExamManagement() {
 
   async function startExamNow(exam) {
     const startDate = new Date();
-    const totalMinutes = (Number(exam.durationMinutes) || 0) + (Number(exam.extraTimeMinutes) || 0);
-    const currentEnd = new Date(exam.endDate);
-    const fallbackEnd = new Date(startDate.getTime() + Math.max(totalMinutes, 1) * 60000);
-    const endDate = currentEnd > startDate ? currentEnd : fallbackEnd;
 
     setSavingId(exam._id);
     try {
       await api.put(`/exams/${exam._id}`, toExamPayload(exam, {
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString()
+        startDate: startDate.toISOString()
       }));
       load();
     } finally {
@@ -483,6 +480,7 @@ export default function ExamManagement() {
   const selectedClock = countdownState(selectedStartExam, now);
   const isLiveClock = selectedClock.mode === "live";
   const isPausedClock = selectedClock.mode === "paused";
+  const calculatedEndDate = calculatedExamEndDate(examForm);
 
   async function openQuestionDetails(exam, fallbackQuestions = []) {
     const latestQuestions = await loadQuestions(exam._id);
@@ -788,7 +786,7 @@ export default function ExamManagement() {
               {courses.map((course) => <option key={course._id} value={course._id}>{course.courseCode} - {course.courseName}</option>)}
             </select>
             <input className="input sm:col-span-2" placeholder="Exam title" value={examForm.title} onChange={(e) => setExamForm({ ...examForm, title: e.target.value })} required />
-            <input className="input" type="number" placeholder="Duration minutes" value={examForm.durationMinutes} onChange={(e) => setExamForm({ ...examForm, durationMinutes: e.target.value })} required />
+            <input className="input" type="number" min="1" placeholder="Exam total time (minutes)" value={examForm.durationMinutes} onChange={(e) => setExamForm({ ...examForm, durationMinutes: e.target.value })} required />
             <input className="input" type="number" min="0" placeholder="Extra time minutes" value={examForm.extraTimeMinutes} onChange={(e) => setExamForm({ ...examForm, extraTimeMinutes: e.target.value })} />
             <input className="input" type="number" placeholder="Total marks" value={examForm.totalMarks} onChange={(e) => setExamForm({ ...examForm, totalMarks: e.target.value })} required />
             <input className="input" type="number" placeholder="Pass percentage" value={examForm.passPercentage} onChange={(e) => setExamForm({ ...examForm, passPercentage: e.target.value })} required />
@@ -796,10 +794,10 @@ export default function ExamManagement() {
               <span>Start time</span>
               <input className="input" type="datetime-local" value={examForm.startDate} onChange={(e) => setExamForm({ ...examForm, startDate: e.target.value })} required />
             </label>
-            <label className="space-y-1 text-sm font-semibold text-slate-600">
-              <span>End time</span>
-              <input className="input" type="datetime-local" value={examForm.endDate} onChange={(e) => setExamForm({ ...examForm, endDate: e.target.value })} required />
-            </label>
+            <div className="space-y-1 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+              <span className="block">End time</span>
+              <span className="block text-slate-950 dark:text-slate-100">{calculatedEndDate ? calculatedEndDate.toLocaleString() : "Calculated from start time"}</span>
+            </div>
             <textarea className="input sm:col-span-2" placeholder="Description" value={examForm.description} onChange={(e) => setExamForm({ ...examForm, description: e.target.value })} />
             <div className="grid gap-3 sm:col-span-2 sm:grid-cols-2">
               <button className="btn-secondary" type="submit" value="save">{editingExamId ? "Save Schedule" : "Save Exam"}</button>
