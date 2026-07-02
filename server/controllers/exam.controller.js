@@ -31,6 +31,16 @@ export const examSchema = z.object({
     passPercentage: z.coerce.number().min(0).max(100),
     startDate: z.coerce.date(),
     endDate: z.coerce.date().optional()
+  }).superRefine((exam, ctx) => {
+    const calculatedEnd = calculateEndDate(exam.startDate, exam.durationMinutes, exam.extraTimeMinutes);
+    const startDay = new Date(exam.startDate);
+    const endDay = new Date(calculatedEnd);
+    if (startDay.getFullYear() !== endDay.getFullYear() || startDay.getMonth() !== endDay.getMonth() || startDay.getDate() !== endDay.getDate()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Exam duration must end on the same date as the selected start date."
+      });
+    }
   }).transform((exam) => ({
     ...exam,
     endDate: calculateEndDate(exam.startDate, exam.durationMinutes, exam.extraTimeMinutes)
