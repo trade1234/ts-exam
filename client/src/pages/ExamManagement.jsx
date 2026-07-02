@@ -37,11 +37,23 @@ function combineLocalDateAndTime(dateValue, timeValue) {
   return `${dateValue}T${timeValue || "00:00"}`;
 }
 
+function localDateTimeToDate(value) {
+  if (!value) return null;
+  const text = String(value);
+  if (/[zZ]|[+-]\d{2}:?\d{2}$/.test(text)) return new Date(text);
+  const [datePart, timePart = "00:00"] = text.split("T");
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hour = 0, minute = 0] = timePart.split(":").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day, hour, minute);
+}
+
 function calculatedExamEndDate(exam) {
-  if (!exam?.startDate) return null;
+  const startDate = localDateTimeToDate(exam?.startDate);
+  if (!startDate) return null;
   const totalMinutes = (Number(exam.durationMinutes) || 0) + (Number(exam.extraTimeMinutes) || 0);
   if (totalMinutes <= 0) return null;
-  return new Date(new Date(exam.startDate).getTime() + totalMinutes * 60000);
+  return new Date(startDate.getTime() + totalMinutes * 60000);
 }
 
 function defaultExamForm() {
@@ -177,9 +189,11 @@ function toExamPayload(exam, overrides = {}) {
     startDate: exam.startDate,
     ...overrides
   };
+  const startDate = localDateTimeToDate(payload.startDate);
   const endDate = calculatedExamEndDate(payload);
   return {
     ...payload,
+    startDate: startDate ? startDate.toISOString() : payload.startDate,
     endDate: endDate ? endDate.toISOString() : payload.endDate
   };
 }
