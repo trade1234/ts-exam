@@ -31,7 +31,7 @@ const allowedOrigins = new Set([
   "http://127.0.0.1:5173",
   "http://127.0.0.1:5174",
   "https://examfrontend-f35t.onrender.com",
-  "https://examfrontend-f35t.onrender.com/"
+  "https://exam-fi4e-git-main-trade-ethiopias-projects.vercel.app"
 ]);
 const localDevOrigin = /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|172\.16\.\d+\.\d+):(5173|5174|5175)$/;
 const renderFrontendOrigin = /^https:\/\/[a-z0-9-]+\.onrender\.com$/;
