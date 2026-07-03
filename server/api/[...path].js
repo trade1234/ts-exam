@@ -3,14 +3,14 @@ import { connectDB } from "../config/db.js";
 
 function normalizeRequestUrl(req) {
   const url = req.url || "/";
-  if (url.startsWith("/api") || url.startsWith("/uploads")) return;
+  if (url === "/" || url.startsWith("/api") || url.startsWith("/uploads")) return;
 
   req.url = `/api${url.startsWith("/") ? url : `/${url}`}`;
 }
 
 function isHealthCheck(req) {
   const pathname = (req.url || "").split("?")[0];
-  return pathname === "/api/health" || pathname === "/health";
+  return pathname === "/" || pathname === "/api/health" || pathname === "/health";
 }
 
 export default async function handler(req, res) {

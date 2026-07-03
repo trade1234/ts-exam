@@ -52,7 +52,13 @@ app.get("/uploads/applications/:filename", serveApplicationUpload);
 app.use("/uploads", express.static(join(__dirname, "uploads")));
 app.use("/uploads", express.static(join(__dirname, "..", "uploads")));
 
-app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
+function healthResponse(_req, res) {
+  res.json({ status: "ok", service: "online-exam-server" });
+}
+
+app.get("/", healthResponse);
+app.get("/health", healthResponse);
+app.get("/api/health", healthResponse);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/application", applicationRoutes);
 app.use("/api/auth", authRoutes);
