@@ -1,7 +1,7 @@
 node_modules/
 dist/
+client/dist/
 .env
-*.log
 server/.env
 client/.env
-
+*.log

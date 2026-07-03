@@ -8,3 +8,5 @@ server/uploads
 server/.env
 client/.env
 *.log
+.git
+coc FORM.doc
