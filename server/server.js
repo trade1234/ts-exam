@@ -6,6 +6,7 @@ import mongoSanitize from "express-mongo-sanitize";
 import morgan from "morgan";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { connectDB } from "./config/db.js";
 import { env } from "./config/env.js";
 import applicationRoutes from "./routes/application.routes.js";
 import { serveApplicationUpload } from "./controllers/application.controller.js";
@@ -59,6 +60,20 @@ function healthResponse(_req, res) {
 app.get("/", healthResponse);
 app.get("/health", healthResponse);
 app.get("/api/health", healthResponse);
+
+async function ensureDatabase(_req, _res, next) {
+  try {
+    await connectDB();
+    next();
+  } catch (error) {
+    error.statusCode = 500;
+    error.message = "Database connection failed. Check MONGO_URI and MongoDB Atlas network access in Vercel.";
+    error.code = "DATABASE_CONNECTION_FAILED";
+    next(error);
+  }
+}
+
+app.use(["/api", "/uploads/applications"], ensureDatabase);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/application", applicationRoutes);
 app.use("/api/auth", authRoutes);
