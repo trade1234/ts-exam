@@ -1,11 +1,10 @@
 import axios from "axios";
 
-const defaultProductionApiUrl = "https://exam-iglv.onrender.com/api";
 const configuredApiUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "");
 const isLocalApiUrl = configuredApiUrl && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?($|\/)/.test(configuredApiUrl);
 const normalizedConfiguredApiUrl = configuredApiUrl && !configuredApiUrl.endsWith("/api") ? `${configuredApiUrl}/api` : configuredApiUrl;
 
-export const apiBaseURL = import.meta.env.PROD && isLocalApiUrl ? defaultProductionApiUrl : normalizedConfiguredApiUrl || (import.meta.env.PROD ? defaultProductionApiUrl : "/api");
+export const apiBaseURL = import.meta.env.PROD && isLocalApiUrl ? "/api" : normalizedConfiguredApiUrl || "/api";
 
 export const api = axios.create({
   baseURL: apiBaseURL
