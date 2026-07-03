@@ -18,6 +18,7 @@ import userRoutes from "./routes/user.routes.js";
 import { errorHandler, notFound } from "./middlewares/error.js";
 
 export const app = express();
+app.set("trust proxy", 1);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
@@ -30,9 +31,10 @@ const allowedOrigins = new Set([
 ]);
 const localDevOrigin = /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|172\.16\.\d+\.\d+):(5173|5174|5175)$/;
 const renderFrontendOrigin = /^https:\/\/[a-z0-9-]+\.onrender\.com$/;
+const vercelFrontendOrigin = /^https:\/\/[a-z0-9-]+\.vercel\.app$/;
 
 function isAllowedOrigin(origin) {
-  return allowedOrigins.has(origin) || localDevOrigin.test(origin) || renderFrontendOrigin.test(origin);
+  return allowedOrigins.has(origin) || localDevOrigin.test(origin) || renderFrontendOrigin.test(origin) || vercelFrontendOrigin.test(origin);
 }
 
 app.use(cors({
@@ -45,7 +47,7 @@ app.use(cors({
 app.use(express.json({ limit: "2mb" }));
 app.use(mongoSanitize());
 app.use(morgan("dev"));
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 300 }));
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 1000, standardHeaders: true, legacyHeaders: false }));
 app.get("/uploads/applications/:filename", serveApplicationUpload);
 app.use("/uploads", express.static(join(__dirname, "uploads")));
 app.use("/uploads", express.static(join(__dirname, "..", "uploads")));
@@ -62,3 +64,4 @@ app.use("/api/users", userRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
+
