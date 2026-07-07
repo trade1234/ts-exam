@@ -4,6 +4,7 @@ import { Question } from "../models/Question.js";
 import { ExamAttempt } from "../models/ExamAttempt.js";
 import { Answer } from "../models/Answer.js";
 import { logActivity } from "../utils/logger.js";
+import { courseIdsForStudentTraining, courseMatchesStudentTraining } from "../utils/courseAccess.js";
 
 function normalizeAnswer(value = "") {
   return String(value).trim().replace(/\s+/g, " ").toLowerCase();
@@ -50,6 +51,13 @@ export const examSchema = z.object({
 export async function listExams(req, res, next) {
   try {
     const query = req.query.courseId ? { courseId: req.query.courseId } : {};
+    if (req.user.role === "STUDENT") {
+      const courseIds = await courseIdsForStudentTraining(req.user);
+      if (req.query.courseId && !courseIds.some((courseId) => String(courseId) === String(req.query.courseId))) {
+        return res.json([]);
+      }
+      if (!req.query.courseId) query.courseId = { $in: courseIds };
+    }
     const exams = await Exam.find(query).populate("courseId").sort({ startDate: 1 });
     res.json(exams);
   } catch (error) {
@@ -90,6 +98,9 @@ export async function startExam(req, res, next) {
   try {
     const exam = await Exam.findById(req.body.examId).populate("courseId");
     if (!exam) return res.status(404).json({ message: "Exam not found" });
+    if (!courseMatchesStudentTraining(exam.courseId, req.user)) {
+      return res.status(403).json({ message: "This exam is not assigned to your training course." });
+    }
 
     const now = new Date();
     if (now < exam.startDate) {

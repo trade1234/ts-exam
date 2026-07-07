@@ -6,6 +6,7 @@ import { Exam } from "../models/Exam.js";
 import { Course } from "../models/Course.js";
 import { ActivityLog } from "../models/ActivityLog.js";
 import { logActivity } from "../utils/logger.js";
+import { courseIdsForStudentTraining } from "../utils/courseAccess.js";
 
 function generateStudentPassword() {
   return crypto.randomBytes(9).toString("base64url");
@@ -154,9 +155,13 @@ export async function setStudentActive(req, res, next) {
 
 export async function studentDashboard(req, res, next) {
   try {
+    const courseIds = await courseIdsForStudentTraining(req.user);
+    const assignedCourseQuery = { _id: { $in: courseIds } };
+    const assignedExamQuery = { startDate: { $gte: new Date() }, courseId: { $in: courseIds } };
+
     const [courses, upcomingExams, recentResults] = await Promise.all([
-      Course.find().limit(6).sort({ createdAt: -1 }),
-      Exam.find({ startDate: { $gte: new Date() } }).populate("courseId").limit(6).sort({ startDate: 1 }),
+      Course.find(assignedCourseQuery).limit(6).sort({ createdAt: -1 }),
+      Exam.find(assignedExamQuery).populate("courseId").limit(6).sort({ startDate: 1 }),
       ExamAttempt.find({ studentId: req.user._id, status: { $ne: "IN_PROGRESS" } })
         .populate({ path: "examId", populate: { path: "courseId" } })
         .limit(5)
